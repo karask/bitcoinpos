@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FF5722</color>
+    <color name="colorPrimaryDark">#E64A19</color>
+    <color name="colorAccent">@android:color/holo_orange_light</color>
+
+    <color name="windowBackground">#FFFFFF</color>
+
+    <color name="colorLightPrimary">#FFCCBC</color>
+    <color name="colorTextIcons">#FFFFFF</color>
+    <color name="colorDivider">#FFFFFF</color>
+
+</resources>

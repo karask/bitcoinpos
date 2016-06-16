@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:key="merchant_name"
+        android:title="@string/merchant_name"
+        android:summary="@string/merchant_name"
+        android:dialogTitle="@string/merchant_name" />
+
+</PreferenceScreen>
