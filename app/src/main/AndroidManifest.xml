@@ -28,7 +28,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
-        <activity android:name=".ScannerActivity"></activity>
+        <activity
+            android:name=".ScannerActivity"
+            android:label="@string/scan_qr_code"
+            android:parentActivityName=".SettingsActivity">
+        </activity>
     </application>
 
 </manifest>

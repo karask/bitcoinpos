@@ -7,23 +7,11 @@
         android:id="@+id/toolbar"
         layout="@layout/toolbar" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/code_info"
-        android:textSize="20sp"
-        android:layout_marginLeft="16dp"
-        android:text="Nothing to read."
-        android:layout_below="@id/toolbar"
-        />
-
     <SurfaceView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/code_info"
-
+        android:layout_below="@id/toolbar"
         android:id="@+id/camera_view"
         />
-
 
 </RelativeLayout>

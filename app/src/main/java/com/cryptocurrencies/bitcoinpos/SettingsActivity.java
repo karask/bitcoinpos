@@ -1,6 +1,7 @@
 package com.cryptocurrencies.bitcoinpos;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,6 +19,8 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.view.MenuItem;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -111,29 +114,69 @@ public class SettingsActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setMessage("Your Message");
 
-                // SCAN button
-                builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        //Toast.makeText(getContext(), "aaa", Toast.LENGTH_LONG).show();
-                        //preference.setSummary("aaa");
+                // get camera's permission
+                int permissionCheck = ContextCompat.checkSelfPermission(this.getContext(),
+                        android.Manifest.permission.CAMERA);
 
-                        Intent goToScanner = new Intent(getContext(), ScannerActivity.class);
-                        startActivity(goToScanner);
+                // first time and if never ask again is unchecked
+                if(shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) || permissionCheck == PackageManager.PERMISSION_GRANTED) {
 
-                    }
-                });
+                    // SCAN button
+                    builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            //Toast.makeText(getContext(), "aaa", Toast.LENGTH_LONG).show();
+                            //preference.setSummary("aaa");
 
-                // PASTE button
-                builder.setPositiveButton(getString(R.string.paste), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(SettingsFragment.this.getContext());
-                        builder.setTitle(getString(R.string.payment_address));
+                            Intent goToScanner = new Intent(getContext(), ScannerActivity.class);
+                            startActivity(goToScanner);
+
+                        }
+                    });
+
+                    // PASTE button
+                    builder.setPositiveButton(getString(R.string.paste), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            final AlertDialog.Builder getAddressDialog = new AlertDialog.Builder(SettingsFragment.this.getContext());
+                            getAddressDialog.setTitle(getString(R.string.payment_address));
+
+                            final EditText input = new EditText(getContext());
+                            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
+                            getAddressDialog.setView(input);
+
+                            getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                                    editor.putString(getString(R.string.payment_address_key), input.getText().toString());
+                                    editor.commit();
+                                    preference.setSummary(input.getText().toString());
+                                }
+                            });
+                            getAddressDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            });
+
+//                            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+//                            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                            getAddressDialog.show();
+                        }
+                    });
+
+                    builder.show();
+                } else {
+                    // if never ask again is checked AND permission was denied... go directly to address PASTE dialog
+                    if(permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                        AlertDialog.Builder getAddressDialog = new AlertDialog.Builder(SettingsFragment.this.getContext());
+                        getAddressDialog.setTitle(getString(R.string.payment_address));
 
                         final EditText input = new EditText(getContext());
                         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
-                        builder.setView(input);
+                        getAddressDialog.setView(input);
 
-                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -142,18 +185,18 @@ public class SettingsActivity extends AppCompatActivity {
                                 preference.setSummary(input.getText().toString());
                             }
                         });
-                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        getAddressDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 dialog.cancel();
                             }
                         });
 
-                        builder.show();
+//                        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+//                        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                        getAddressDialog.show();
                     }
-                });
-
-                builder.show();
+                }
 
             }
             return super.onPreferenceTreeClick(preference);

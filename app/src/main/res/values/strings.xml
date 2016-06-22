@@ -19,9 +19,11 @@
     <string name="payment_address_key">PaymentAddressKey</string>
     <string name="local_currency_key">LocalCurrencyKey</string>
 
+    <string name="scan_qr_code">Scan QR Code</string>
 
+    <string name="default_currency_code">EUR</string>
     <string-array name="currency_codes">
-        <item>EUR</item>
+        <item>@string/default_currency_code</item>
         <item>USD</item>
         <item>GBP</item>
     </string-array>

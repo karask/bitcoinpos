@@ -4,19 +4,20 @@
     <EditTextPreference
         android:key="@string/merchant_name_key"
         android:title="@string/merchant_name"
+        android:defaultValue="@string/merchant_name"
         android:dialogTitle="@string/merchant_name" />
-
-
-    <Preference
-        android:key="@string/payment_address_key"
-        android:title="@string/payment_address"
-        android:dialogTitle="@string/payment_address"/>
 
     <ListPreference
         android:key="@string/local_currency_key"
         android:title="@string/local_currency"
+        android:defaultValue="@string/default_currency_code"
         android:entries="@array/currency_names"
         android:entryValues="@array/currency_codes"
         android:dialogTitle="@string/local_currency" />
+    
+    <Preference
+        android:key="@string/payment_address_key"
+        android:title="@string/payment_address"
+        android:dialogTitle="@string/payment_address"/>
 
 </PreferenceScreen>

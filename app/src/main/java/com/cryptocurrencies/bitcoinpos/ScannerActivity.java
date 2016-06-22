@@ -1,20 +1,21 @@
 package com.cryptocurrencies.bitcoinpos;
 
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NavUtils;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.TextViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -26,10 +27,11 @@ import java.io.IOException;
 public class ScannerActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
+    private SharedPreferences sharedPreferences;
+
     private SurfaceView mCameraView;
     private CameraSource mCameraSource;
     private BarcodeDetector mBarcodeDetector;
-    private TextView mBarcodeInfo;
     private final int REQUEST_PERMISSION_CAMERA=1;
 
     @Override
@@ -37,13 +39,16 @@ public class ScannerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scanner);
 
+        // init preferences
+        // TODO get package name dynamically!!
+        sharedPreferences = getSharedPreferences("com.cryptocurrencies.bitcoinpos_preferences", Context.MODE_PRIVATE);
+
         // Display toolbar and back arrow -- title and parent is found in activity tag in manifest
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mCameraView = (SurfaceView)findViewById(R.id.camera_view);
-        mBarcodeInfo = (TextView)findViewById(R.id.code_info);
         mBarcodeDetector =
                 new BarcodeDetector.Builder(this)
                         .setBarcodeFormats(Barcode.QR_CODE)
@@ -96,18 +101,59 @@ public class ScannerActivity extends AppCompatActivity {
             public void receiveDetections(Detector.Detections<Barcode> detections) {
                 final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                 if (barcodes.size() != 0) {
-                    //Toast.makeText(getApplicationContext(), barcodes.valueAt(0).displayValue, Toast.LENGTH_LONG);
-                    mBarcodeInfo.post(new Runnable() {    // Use the post method of the TextView
-                        public void run() {
-                            mBarcodeInfo.setText(    // Update the TextView
-                                    barcodes.valueAt(0).displayValue
-                            );
-                        }
-                    });
+
+                    // set appropriate setting/preference
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString(getString(R.string.payment_address_key), barcodes.valueAt(0).displayValue);
+                    editor.commit();
+
+                    // go to settings activity
+                    Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
+                    startActivity(goToSettings);
+
                 }
             }
         });
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_PERMISSION_CAMERA: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                    Intent goToSelf = new Intent(ScannerActivity.this, ScannerActivity.class);
+                    startActivity(goToSelf);
+                    finish();
+                } else {
+                    // permission denied
+                    Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
+                    startActivity(goToSettings);
+                }
+                return;
+            }
+
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == android.R.id.home) {
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 }
