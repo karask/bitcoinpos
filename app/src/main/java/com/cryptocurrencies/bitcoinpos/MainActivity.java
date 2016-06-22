@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
             action bar.
         */
         mViewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
+        mViewPagerAdapter.addFragment(new PaymentFragment());
+        mViewPagerAdapter.addFragment(new HistoryFragment());
         mViewPager.setAdapter(mViewPagerAdapter);
         setSupportActionBar(mToolbar);
 
@@ -71,11 +75,18 @@ public class MainActivity extends AppCompatActivity {
         //mTabLayout.setSelectedTabIndicatorColor(ContextCompat.getColor(this, R.color.indicator));
 
         /*
-            Adding a onPageChangeListener to the viewPager
-            1st we add the PageChangeListener and pass a TabLayoutPageChangeListener so that Tabs Selection
+            Adding a onPageChangeListener to the mViewPager
+            We add the PageChangeListener and pass a TabLayoutPageChangeListener so that Tabs Selection
             changes when a viewpager page changes.
         */
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(mTabLayout));
+
+        /*
+            Adding a onTabSelectedListener to the mTabLayout
+            We add the TabSelectedListener and pass a ViewPagerOnTabSelectedListener so that mViewPager
+            Selection changes when a tab layout changes.
+        */
+        mTabLayout.setOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
 
 
 

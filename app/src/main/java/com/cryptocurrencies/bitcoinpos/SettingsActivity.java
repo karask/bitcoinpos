@@ -1,6 +1,13 @@
 package com.cryptocurrencies.bitcoinpos;
 
+import android.Manifest;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
@@ -9,7 +16,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.Toast;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -88,10 +98,67 @@ public class SettingsActivity extends AppCompatActivity {
                 if (prefIndex >= 0) {
                     preference.setSummary(listPreference.getEntries()[prefIndex]);
                 }
+            } else if (preference instanceof EditTextPreference) {
+                preference.setSummary(sharedPreferences.getString(key, ""));
             } else {
                 preference.setSummary(sharedPreferences.getString(key, ""));
             }
         }
+
+        @Override
+        public boolean onPreferenceTreeClick(final Preference preference) {
+            if(preference.getKey().equals(getString(R.string.payment_address_key))) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setMessage("Your Message");
+
+                // SCAN button
+                builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //Toast.makeText(getContext(), "aaa", Toast.LENGTH_LONG).show();
+                        //preference.setSummary("aaa");
+
+                        Intent goToScanner = new Intent(getContext(), ScannerActivity.class);
+                        startActivity(goToScanner);
+
+                    }
+                });
+
+                // PASTE button
+                builder.setPositiveButton(getString(R.string.paste), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(SettingsFragment.this.getContext());
+                        builder.setTitle(getString(R.string.payment_address));
+
+                        final EditText input = new EditText(getContext());
+                        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
+                        builder.setView(input);
+
+                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString(getString(R.string.payment_address_key), input.getText().toString());
+                                editor.commit();
+                                preference.setSummary(input.getText().toString());
+                            }
+                        });
+                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
+
+                        builder.show();
+                    }
+                });
+
+                builder.show();
+
+            }
+            return super.onPreferenceTreeClick(preference);
+        }
+
 
         @Override
         public void onPause() {

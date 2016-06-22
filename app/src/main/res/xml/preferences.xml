@@ -6,10 +6,11 @@
         android:title="@string/merchant_name"
         android:dialogTitle="@string/merchant_name" />
 
-    <EditTextPreference
+
+    <Preference
         android:key="@string/payment_address_key"
         android:title="@string/payment_address"
-        android:dialogTitle="@string/payment_address" />
+        android:dialogTitle="@string/payment_address"/>
 
     <ListPreference
         android:key="@string/local_currency_key"

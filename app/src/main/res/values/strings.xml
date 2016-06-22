@@ -1,19 +1,23 @@
 <resources>
+    <!-- toolbar -->
     <string name="app_name">Bitcoin PoS</string>
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
 
+    <!-- tabs -->
     <string name="payment">Payment</string>
     <string name="history">History</string>
 
+    <!-- preferences -->
     <string name="merchant_name">Merchant name</string>
     <string name="payment_address">Payment address</string>
     <string name="local_currency">Local currency</string>
+    <string name="scan">Scan</string>
+    <string name="paste">Paste</string>
 
     <string name="merchant_name_key">MerchantNameKey</string>
     <string name="payment_address_key">PaymentAddressKey</string>
     <string name="local_currency_key">LocalCurrencyKey</string>
-
 
 
     <string-array name="currency_codes">
