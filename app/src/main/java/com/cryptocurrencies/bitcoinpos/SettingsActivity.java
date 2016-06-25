@@ -149,6 +149,7 @@ public class SettingsActivity extends AppCompatActivity {
                             final EditText input = new EditText(getContext());
                             input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
                             getAddressDialog.setView(input);
+                            getAddressDialog.setMessage(getString(R.string.paste_bitcoin_address_message));
 
                             getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                 @Override
