@@ -22,6 +22,10 @@
     <string name="scan_qr_code">Scan QR Code</string>
 
     <string name="default_currency_code">EUR</string>
+    <string name="invalid_bitcoin_address_message">This was not a valid Bitcoin address</string>
+    <string name="add_payment_address_title">Add payment address</string>
+    <string name="add_payment_address_message">Please scan a Bitcoin address QR code or just paste the address.</string>
+
     <string-array name="currency_codes">
         <item>@string/default_currency_code</item>
         <item>USD</item>

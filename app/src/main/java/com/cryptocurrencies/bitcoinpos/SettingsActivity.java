@@ -33,6 +33,10 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        // get caller params
+        Intent caller = getIntent();
+        boolean showAddressInvalidMessage = caller.getBooleanExtra(BitcoinUtils.showAddressInvalidMessage, false);
+
         // Display toolbar and back arrow -- title and parent is found in activity tag in manifest
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -42,6 +46,10 @@ public class SettingsActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.content_frame, new SettingsFragment())
                 .commit();
+
+        if(showAddressInvalidMessage) {
+            Toast.makeText(getApplicationContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_LONG).show();
+        }
 
     }
 
@@ -112,7 +120,8 @@ public class SettingsActivity extends AppCompatActivity {
         public boolean onPreferenceTreeClick(final Preference preference) {
             if(preference.getKey().equals(getString(R.string.payment_address_key))) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                builder.setMessage("Your Message");
+                builder.setTitle(R.string.add_payment_address_title);
+                builder.setMessage(getString(R.string.add_payment_address_message));
 
                 // get camera's permission
                 int permissionCheck = ContextCompat.checkSelfPermission(this.getContext(),
@@ -124,12 +133,8 @@ public class SettingsActivity extends AppCompatActivity {
                     // SCAN button
                     builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            //Toast.makeText(getContext(), "aaa", Toast.LENGTH_LONG).show();
-                            //preference.setSummary("aaa");
-
                             Intent goToScanner = new Intent(getContext(), ScannerActivity.class);
                             startActivity(goToScanner);
-
                         }
                     });
 
@@ -146,10 +151,19 @@ public class SettingsActivity extends AppCompatActivity {
                             getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                                    editor.putString(getString(R.string.payment_address_key), input.getText().toString());
-                                    editor.commit();
-                                    preference.setSummary(input.getText().toString());
+                                    // TODO duplicate of "Paste" in ScanOrPaste dialog above (abstract)
+                                    // get value and validate
+                                    String address = input.getText().toString();
+                                    boolean isAddressValid = BitcoinUtils.validateAddress(address);
+                                    if(isAddressValid) {
+                                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                                        editor.putString(getString(R.string.payment_address_key), input.getText().toString());
+                                        editor.commit();
+                                        preference.setSummary(input.getText().toString());
+                                    } else {
+                                        Toast.makeText(getContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_LONG).show();
+                                    }
+
                                 }
                             });
                             getAddressDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -179,11 +193,18 @@ public class SettingsActivity extends AppCompatActivity {
                         getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                SharedPreferences.Editor editor = sharedPreferences.edit();
-                                editor.putString(getString(R.string.payment_address_key), input.getText().toString());
-                                editor.commit();
-                                preference.setSummary(input.getText().toString());
-                            }
+                                // TODO duplicate of "Paste" in ScanOrPaste dialog above (abstract)
+                                // get value and validate
+                                String address = input.getText().toString();
+                                boolean isAddressValid = BitcoinUtils.validateAddress(address);
+                                if(isAddressValid) {
+                                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                                    editor.putString(getString(R.string.payment_address_key), input.getText().toString());
+                                    editor.commit();
+                                    preference.setSummary(input.getText().toString());
+                                } else {
+                                    Toast.makeText(getContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_LONG).show();
+                                }                            }
                         });
                         getAddressDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                             @Override

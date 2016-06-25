@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.ContextCompat;
@@ -16,6 +17,7 @@ import android.util.SparseArray;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -28,6 +30,7 @@ public class ScannerActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
     private SharedPreferences sharedPreferences;
+    MediaPlayer mediaPlayer;
 
     private SurfaceView mCameraView;
     private CameraSource mCameraSource;
@@ -47,6 +50,10 @@ public class ScannerActivity extends AppCompatActivity {
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // init media player with scanner sound
+        mediaPlayer = MediaPlayer.create(this, R.raw.scanner);
+
 
         mCameraView = (SurfaceView)findViewById(R.id.camera_view);
         mBarcodeDetector =
@@ -102,13 +109,21 @@ public class ScannerActivity extends AppCompatActivity {
                 final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                 if (barcodes.size() != 0) {
 
-                    // set appropriate setting/preference
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString(getString(R.string.payment_address_key), barcodes.valueAt(0).displayValue);
-                    editor.commit();
+                    mediaPlayer.start();
+
+                    // get detected value and validate
+                    String address = barcodes.valueAt(0).displayValue;
+                    boolean isAddressValid = BitcoinUtils.validateAddress(address);
+                    if(isAddressValid) {
+                        // set appropriate setting/preference
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString(getString(R.string.payment_address_key), address);
+                        editor.commit();
+                    }
 
                     // go to settings activity
                     Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
+                    goToSettings.putExtra(BitcoinUtils.showAddressInvalidMessage, !isAddressValid);
                     startActivity(goToSettings);
 
                 }
