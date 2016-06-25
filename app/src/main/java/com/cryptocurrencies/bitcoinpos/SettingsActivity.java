@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.EditTextPreference;
@@ -127,8 +128,9 @@ public class SettingsActivity extends AppCompatActivity {
                 int permissionCheck = ContextCompat.checkSelfPermission(this.getContext(),
                         android.Manifest.permission.CAMERA);
 
-                // first time and if never ask again is unchecked
-                if(shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) || permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                // first time and if never ask again is unchecked (plus only scan if API >= 21)
+                // TODO check if optimized apk leaves > 10% of memory in devices/emulators and thus QR scanning can also work !!!
+                if(Build.VERSION.SDK_INT >= 21 && (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) || permissionCheck == PackageManager.PERMISSION_GRANTED)) {
 
                     // SCAN button
                     builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
@@ -181,10 +183,11 @@ public class SettingsActivity extends AppCompatActivity {
 
                     builder.show();
                 } else {
-                    // if never ask again is checked AND permission was denied... go directly to address PASTE dialog
-                    if(permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                    // if never ask again is checked AND permission was denied (OR if API < 21) -> go directly to address PASTE dialog
+                    if(permissionCheck != PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < 21) {
                         AlertDialog.Builder getAddressDialog = new AlertDialog.Builder(SettingsFragment.this.getContext());
                         getAddressDialog.setTitle(getString(R.string.payment_address));
+                        getAddressDialog.setMessage(getString(R.string.paste_bitcoin_address_message));
 
                         final EditText input = new EditText(getContext());
                         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
