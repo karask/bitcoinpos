@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cryptocurrencies.bitcoinpos">
 
-    <meta-data android:name="com.google.android.gms.vision.DEPENDENCIES" android:value="barcode"/>
     <uses-permission android:name="android.permission.CAMERA" />
+    <meta-data android:name="com.google.android.gms.vision.DEPENDENCIES" android:value="barcode"/>
 
     <application
         android:name="android.support.multidex.MultiDexApplication"

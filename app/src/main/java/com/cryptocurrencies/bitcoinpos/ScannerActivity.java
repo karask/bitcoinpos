@@ -7,17 +7,20 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.Build;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -30,21 +33,34 @@ public class ScannerActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
     private SharedPreferences sharedPreferences;
-    MediaPlayer mediaPlayer;
+    private int cameraWidth;
+    private MediaPlayer mediaPlayer;
 
     private SurfaceView mCameraView;
     private CameraSource mCameraSource;
     private BarcodeDetector mBarcodeDetector;
     private final int REQUEST_PERMISSION_CAMERA=1;
 
+    // flag to make sure that it detects only once
+    private boolean firstDetection;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scanner);
 
+        // only allow one detection (detects more than once because it is fast)
+        firstDetection = true;
+
         // init preferences
         // TODO get package name dynamically!!
         sharedPreferences = getSharedPreferences("com.cryptocurrencies.bitcoinpos_preferences", Context.MODE_PRIVATE);
+
+        // get display width and initialize cameraWidth
+//        DisplayMetrics metrics = new DisplayMetrics();
+//        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+//        int screenWidth = metrics.widthPixels;
+//        cameraWidth = screenWidth * 2 / 3;
 
         // Display toolbar and back arrow -- title and parent is found in activity tag in manifest
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -56,6 +72,10 @@ public class ScannerActivity extends AppCompatActivity {
 
 
         mCameraView = (SurfaceView)findViewById(R.id.camera_view);
+//        ViewGroup.LayoutParams params = mCameraView.getLayoutParams();
+//        params.width = cameraWidth;
+//        params.height = cameraWidth;
+
         mBarcodeDetector =
                 new BarcodeDetector.Builder(this)
                         .setBarcodeFormats(Barcode.QR_CODE)
@@ -65,7 +85,8 @@ public class ScannerActivity extends AppCompatActivity {
                 .Builder(getApplicationContext(), mBarcodeDetector)
                 .setAutoFocusEnabled(true)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
-                .setRequestedFps(15.0f)
+
+                //.setRequestedPreviewSize(cameraWidth, cameraWidth)
                 .build();
 
         Log.d("CAMERA SOURCE 0", "Is operational: " + mBarcodeDetector.isOperational());
@@ -80,9 +101,7 @@ public class ScannerActivity extends AppCompatActivity {
                         Log.d("CAMERA SOURCE", "Is operational: " + mBarcodeDetector.isOperational());
                         mCameraSource.start(mCameraView.getHolder());
                     } else {
-                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            requestPermissions(new String[]{android.Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
-                        }
+                        ActivityCompat.requestPermissions(ScannerActivity.this,  new String[]{android.Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
                     }
                 } catch (IOException ie) {
                     Log.e("CAMERA SOURCE", ie.getMessage());
@@ -107,7 +126,10 @@ public class ScannerActivity extends AppCompatActivity {
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
                 final SparseArray<Barcode> barcodes = detections.getDetectedItems();
-                if (barcodes.size() != 0) {
+                if (barcodes.size() != 0 && firstDetection) {
+
+                    // first detection entered, do not allow second detection ignore sub-sequenct/fast detections
+                    firstDetection = false;
 
                     mediaPlayer.start();
 
@@ -124,8 +146,9 @@ public class ScannerActivity extends AppCompatActivity {
                     // go to settings activity
                     Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
                     goToSettings.putExtra(BitcoinUtils.showAddressInvalidMessage, !isAddressValid);
+                    goToSettings.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(goToSettings);
-
+                    finish();
                 }
             }
         });
@@ -148,6 +171,7 @@ public class ScannerActivity extends AppCompatActivity {
                     // permission denied
                     Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
                     startActivity(goToSettings);
+                    finish();
                 }
                 return;
             }

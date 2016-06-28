@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.EditTextPreference;
@@ -20,8 +21,6 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.view.MenuItem;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -49,7 +48,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .commit();
 
         if(showAddressInvalidMessage) {
-            Toast.makeText(getApplicationContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -130,7 +129,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 // first time and if never ask again is unchecked (plus only scan if API >= 21)
                 // TODO check if optimized apk leaves > 10% of memory in devices/emulators and thus QR scanning can also work !!!
-                if(Build.VERSION.SDK_INT >= 21 && (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) || permissionCheck == PackageManager.PERMISSION_GRANTED)) {
+                if(Build.VERSION.SDK_INT >= 21 && (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.CAMERA) || permissionCheck == PackageManager.PERMISSION_GRANTED)) {
 
                     // SCAN button
                     builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {

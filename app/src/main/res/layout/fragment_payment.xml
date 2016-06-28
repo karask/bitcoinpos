@@ -5,58 +5,155 @@
     android:layout_height="match_parent"
     tools:context="com.cryptocurrencies.bitcoinpos.PaymentFragment">
 
-    <RelativeLayout
+    <android.support.percent.PercentRelativeLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            app:layout_heightPercent="20%"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Large Text"
-            android:id="@+id/textView"
+            android:text="0"
+            android:textAlignment="gravity"
+            android:gravity="center"
+            android:background="@drawable/amount"
+            android:id="@+id/amountTextView"
             android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:padding="8dp"
-            android:layout_margin="8dp"/>
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
 
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@+id/currencyToggleButton"
+            android:layout_toStartOf="@+id/currencyToggleButton"
+            android:layout_alignBottom="@+id/currencyToggleButton" />
 
-        <!--<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_gravity="center"-->
-            <!--android:columnCount="3"-->
-            <!--android:orientation="horizontal"-->
-            <!--android:layout_centerHorizontal="true"-->
-            <!--android:padding="8dp"-->
-            <!--android:layout_below="@id/textView"-->
-            <!--android:id="@+id/gridLayout">-->
+        <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLargeInverse"
+            android:textColor="@color/colorPrimaryDark"
+            app:layout_heightPercent="20%"
+            android:text="New ToggleButton"
+            android:id="@+id/currencyToggleButton"
+            android:textOff="BTC"
+            android:background="@drawable/amount"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
 
-            <!--<Button android:text="1" />-->
+        <LinearLayout
+            android:id="@+id/buttons_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_heightPercent="15%"
+            android:orientation="horizontal"
+            android:layout_below="@id/currencyToggleButton">
 
-            <!--<Button android:text="2" />-->
+            <Button
+                android:id="@+id/btn_1"
+                style="@style/MyGridButton"
+                android:text="1" />
 
-            <!--<Button android:text="3" />-->
+            <Button
+                android:id="@+id/btn_2"
+                style="@style/MyGridButton"
+                android:text="2" />
 
-            <!--<Button android:text="4" />-->
+            <Button
+                android:id="@+id/btn_3"
+                style="@style/MyGridButton"
+                android:text="3" />
 
-            <!--<Button android:text="5" />-->
+        </LinearLayout>
 
-            <!--<Button android:text="6" />-->
+        <LinearLayout
+            android:id="@+id/buttons_container2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_heightPercent="15%"
+            android:orientation="horizontal"
+            android:layout_below="@id/buttons_container">
 
-            <!--<Button android:text="7" />-->
+            <Button
+                android:id="@+id/btn_4"
+                style="@style/MyGridButton"
+                android:text="4" />
 
-            <!--<Button android:text="8" />-->
+            <Button
+                android:id="@+id/btn_5"
+                style="@style/MyGridButton"
+                android:text="5" />
 
-            <!--<Button android:text="9" />-->
+            <Button
+                android:id="@+id/btn_6"
+                style="@style/MyGridButton"
+                android:text="6" />
 
-            <!--<Button android:text="." />-->
+        </LinearLayout>
 
-            <!--<Button android:text="0" />-->
+        <LinearLayout
+            android:id="@+id/buttons_container3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_heightPercent="15%"
+            android:orientation="horizontal"
+            android:layout_below="@id/buttons_container2">
 
-            <!--<Button android:text="<-" />-->
+            <Button
+                android:id="@+id/btn_7"
+                style="@style/MyGridButton"
+                android:text="7" />
 
-        <!--</GridLayout>-->
+            <Button
+                android:id="@+id/btn_8"
+                style="@style/MyGridButton"
+                android:text="8" />
 
-    </RelativeLayout>
+            <Button
+                android:id="@+id/btn_9"
+                style="@style/MyGridButton"
+                android:text="9" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/buttons_container4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_heightPercent="15%"
+            android:orientation="horizontal"
+            android:layout_below="@id/buttons_container3">
+
+            <Button
+                android:id="@+id/btn_dot"
+                style="@style/MyGridButton"
+                android:text="." />
+
+            <Button
+                android:id="@+id/btn_0"
+                style="@style/MyGridButton"
+                android:text="0" />
+
+            <Button
+                android:id="@+id/btn_backspace"
+                style="@style/MyGridButton"
+                android:text="D" />
+
+        </LinearLayout>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/buttons_container4"
+            android:background="@drawable/request_payment"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/request_payment"/>
+
+    </android.support.percent.PercentRelativeLayout>
 
 </android.support.design.widget.CoordinatorLayout>

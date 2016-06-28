@@ -26,6 +26,7 @@
     <string name="add_payment_address_title">Add payment address</string>
     <string name="add_payment_address_message">Please scan a Bitcoin address QR code or just paste the address.</string>
     <string name="paste_bitcoin_address_message">Please paste your Bitcoin address here.</string>
+    <string name="request_payment">Request Payment</string>
 
     <string-array name="currency_codes">
         <item>@string/default_currency_code</item>
