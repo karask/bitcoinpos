@@ -6,21 +6,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
-import android.os.Build;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -39,7 +33,6 @@ public class ScannerActivity extends AppCompatActivity {
     private SurfaceView mCameraView;
     private CameraSource mCameraSource;
     private BarcodeDetector mBarcodeDetector;
-    private final int REQUEST_PERMISSION_CAMERA=1;
 
     // flag to make sure that it detects only once
     private boolean firstDetection;
@@ -89,7 +82,7 @@ public class ScannerActivity extends AppCompatActivity {
                 //.setRequestedPreviewSize(cameraWidth, cameraWidth)
                 .build();
 
-        Log.d("CAMERA SOURCE 0", "Is operational: " + mBarcodeDetector.isOperational());
+        //Log.d("CAMERA SOURCE 0", "Is operational: " + mBarcodeDetector.isOperational());
 
         mCameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -98,13 +91,11 @@ public class ScannerActivity extends AppCompatActivity {
                     int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(),
                             android.Manifest.permission.CAMERA);
                     if(permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        Log.d("CAMERA SOURCE", "Is operational: " + mBarcodeDetector.isOperational());
+                        //Log.d("CAMERA SOURCE 1", "Is operational: " + mBarcodeDetector.isOperational());
                         mCameraSource.start(mCameraView.getHolder());
-                    } else {
-                        ActivityCompat.requestPermissions(ScannerActivity.this,  new String[]{android.Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
                     }
                 } catch (IOException ie) {
-                    Log.e("CAMERA SOURCE", ie.getMessage());
+                    //Log.e("CAMERA SOURCE", ie.getMessage());
                 }
             }
 
@@ -155,29 +146,7 @@ public class ScannerActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_PERMISSION_CAMERA: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted
-                    Intent goToSelf = new Intent(ScannerActivity.this, ScannerActivity.class);
-                    startActivity(goToSelf);
-                    finish();
-                } else {
-                    // permission denied
-                    Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
-                    startActivity(goToSettings);
-                    finish();
-                }
-                return;
-            }
 
-        }
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

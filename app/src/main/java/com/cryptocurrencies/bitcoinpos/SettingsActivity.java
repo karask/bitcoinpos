@@ -1,12 +1,10 @@
 package com.cryptocurrencies.bitcoinpos;
 
-import android.Manifest;
-import android.content.Context;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -77,6 +75,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static class SettingsFragment extends PreferenceFragmentCompat  implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         SharedPreferences sharedPreferences;
+        private final int REQUEST_PERMISSION_CAMERA=1;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -124,13 +123,12 @@ public class SettingsActivity extends AppCompatActivity {
                 builder.setMessage(getString(R.string.add_payment_address_message));
 
                 // get camera's permission
-                int permissionCheck = ContextCompat.checkSelfPermission(this.getContext(),
+                int permissionCheck = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
                         android.Manifest.permission.CAMERA);
 
-                // first time and if never ask again is unchecked (plus only scan if API >= 21)
-                // TODO check if optimized apk leaves > 10% of memory in devices/emulators and thus QR scanning can also work !!!
-                if(Build.VERSION.SDK_INT >= 21 && (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.CAMERA) || permissionCheck == PackageManager.PERMISSION_GRANTED)) {
-
+                if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
+                } else {
                     // SCAN button
                     builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
@@ -142,84 +140,11 @@ public class SettingsActivity extends AppCompatActivity {
                     // PASTE button
                     builder.setPositiveButton(getString(R.string.paste), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            final AlertDialog.Builder getAddressDialog = new AlertDialog.Builder(SettingsFragment.this.getContext());
-                            getAddressDialog.setTitle(getString(R.string.payment_address));
-
-                            final EditText input = new EditText(getContext());
-                            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
-                            getAddressDialog.setView(input);
-                            getAddressDialog.setMessage(getString(R.string.paste_bitcoin_address_message));
-
-                            getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // TODO duplicate of "Paste" in ScanOrPaste dialog above (abstract)
-                                    // get value and validate
-                                    String address = input.getText().toString();
-                                    boolean isAddressValid = BitcoinUtils.validateAddress(address);
-                                    if(isAddressValid) {
-                                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                                        editor.putString(getString(R.string.payment_address_key), input.getText().toString());
-                                        editor.commit();
-                                        preference.setSummary(input.getText().toString());
-                                    } else {
-                                        Toast.makeText(getContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_LONG).show();
-                                    }
-
-                                }
-                            });
-                            getAddressDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            });
-
-//                            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-//                            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-                            getAddressDialog.show();
+                            requestPastePaymentAddress();
                         }
                     });
 
                     builder.show();
-                } else {
-                    // if never ask again is checked AND permission was denied (OR if API < 21) -> go directly to address PASTE dialog
-                    if(permissionCheck != PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < 21) {
-                        AlertDialog.Builder getAddressDialog = new AlertDialog.Builder(SettingsFragment.this.getContext());
-                        getAddressDialog.setTitle(getString(R.string.payment_address));
-                        getAddressDialog.setMessage(getString(R.string.paste_bitcoin_address_message));
-
-                        final EditText input = new EditText(getContext());
-                        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
-                        getAddressDialog.setView(input);
-
-                        getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // TODO duplicate of "Paste" in ScanOrPaste dialog above (abstract)
-                                // get value and validate
-                                String address = input.getText().toString();
-                                boolean isAddressValid = BitcoinUtils.validateAddress(address);
-                                if(isAddressValid) {
-                                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                                    editor.putString(getString(R.string.payment_address_key), input.getText().toString());
-                                    editor.commit();
-                                    preference.setSummary(input.getText().toString());
-                                } else {
-                                    Toast.makeText(getContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_LONG).show();
-                                }                            }
-                        });
-                        getAddressDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        });
-
-//                        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-//                        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-                        getAddressDialog.show();
-                    }
                 }
 
             }
@@ -242,6 +167,80 @@ public class SettingsActivity extends AppCompatActivity {
 //        }
 
 
+        public void requestPastePaymentAddress() {
+            AlertDialog.Builder getAddressDialog = new AlertDialog.Builder(SettingsFragment.this.getContext());
+            getAddressDialog.setTitle(getString(R.string.payment_address));
+            getAddressDialog.setMessage(getString(R.string.paste_bitcoin_address_message));
+
+            final EditText input = new EditText(getContext());
+            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
+            getAddressDialog.setView(input);
+
+            getAddressDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // get value and validate
+                    String address = input.getText().toString();
+                    boolean isAddressValid = BitcoinUtils.validateAddress(address);
+                    if(isAddressValid) {
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString(getString(R.string.payment_address_key), input.getText().toString());
+                        editor.commit();
+                        findPreference(getString(R.string.payment_address_key)).setSummary(input.getText().toString());
+                    } else {
+                        Toast.makeText(getContext(), R.string.invalid_bitcoin_address_message, Toast.LENGTH_LONG).show();
+                    }                            }
+            });
+            getAddressDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+
+            // InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            // imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+            getAddressDialog.show();
+        }
+
+
+
+        @Override
+        public void onRequestPermissionsResult(int requestCode,
+                                               String permissions[], int[] grantResults) {
+            switch (requestCode) {
+                case REQUEST_PERMISSION_CAMERA: {
+                    // If request is cancelled, the result arrays are empty.
+                    if (grantResults.length > 0
+                            && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        // permission was granted
+                        Intent goToScanning = new Intent(getContext(), ScannerActivity.class);
+                        startActivity(goToScanning);
+                        getActivity().finish();
+                    } else {
+                        // permission denied (whether never ask is checked or not
+                        requestPastePaymentAddress();
+                    }
+                    return;
+                }
+
+            }
+        }
+
     }
+
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+
+
+        // call fragment's onRequestPermissionsResult !!
+        getSupportFragmentManager().findFragmentById(R.id.content_frame).onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+
 
 }
