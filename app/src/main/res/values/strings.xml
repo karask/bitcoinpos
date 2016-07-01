@@ -27,6 +27,7 @@
     <string name="add_payment_address_message">Please scan a Bitcoin address QR code or just paste the address.</string>
     <string name="paste_bitcoin_address_message">Please paste your Bitcoin address here.</string>
     <string name="request_payment">Request Payment</string>
+    <string name="amount_less_than_1000_message">The amount value should be less than 1000 BTC !</string>
 
     <string-array name="currency_codes">
         <item>@string/default_currency_code</item>

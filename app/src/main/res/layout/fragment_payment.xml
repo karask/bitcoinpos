@@ -38,7 +38,6 @@
             android:textAppearance="?android:attr/textAppearanceLargeInverse"
             android:textColor="@color/colorPrimaryDark"
             app:layout_heightPercent="20%"
-            android:text="New ToggleButton"
             android:id="@+id/currencyToggleButton"
             android:textOff="BTC"
             android:background="@drawable/amount"
