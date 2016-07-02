@@ -28,6 +28,7 @@
     <string name="paste_bitcoin_address_message">Please paste your Bitcoin address here.</string>
     <string name="request_payment">Request Payment</string>
     <string name="amount_less_than_1000_message">The amount value should be less than 1000 BTC !</string>
+    <string name="specify_valid_bitcoin_address_message">Please specify a valid Bitcoin address to receive payments</string>
 
     <string-array name="currency_codes">
         <item>@string/default_currency_code</item>

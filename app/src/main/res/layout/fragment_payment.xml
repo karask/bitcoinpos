@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/coordinatorLayout"
     tools:context="com.cryptocurrencies.bitcoinpos.PaymentFragment">
 
     <android.support.percent.PercentRelativeLayout
@@ -187,6 +188,7 @@
             android:layout_below="@id/buttons_container4"
             android:background="@drawable/request_payment"
             android:textAppearance="?android:attr/textAppearanceLarge"
+            android:id="@+id/request_payment"
             android:text="@string/request_payment"/>
 
     </android.support.percent.PercentRelativeLayout>
