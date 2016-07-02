@@ -25,14 +25,5 @@
 
     </style>
 
-    <style name="MyGridButton" parent="Base.Widget.AppCompat.Button">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:background">@drawable/numerical_pad</item>
 
-    </style>
-    <!--<style name="ActionBarTabText.MyTheme" parent="@android:style/Widget.DeviceDefault.ActionBar.TabText">"-->
-        <!--<item name="android:textColor">@android:color/white</item>-->
-    <!--</style>-->
 </resources>
