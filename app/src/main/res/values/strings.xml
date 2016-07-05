@@ -27,8 +27,10 @@
     <string name="add_payment_address_message">Please scan a Bitcoin address QR code or just paste the address.</string>
     <string name="paste_bitcoin_address_message">Please paste your Bitcoin address here.</string>
     <string name="request_payment">Request Payment</string>
-    <string name="amount_less_than_1000_message">The amount value should be less than 1000 BTC !</string>
+    <string name="amount_less_than_10000_message">The amount value should be less than 10000 BTC !</string>
+    <string name="amount_has_more_decimals_than_allowed">You have reached the limit of the decimals allowed for the currency !</string>
     <string name="specify_valid_bitcoin_address_message">Please specify a valid Bitcoin address to receive payments</string>
+    <string name="network_connection_not_available_message">Network connection is not available</string>
 
     <string-array name="currency_codes">
         <item>@string/default_currency_code</item>

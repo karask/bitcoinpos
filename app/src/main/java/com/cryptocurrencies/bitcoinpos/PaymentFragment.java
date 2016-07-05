@@ -16,12 +16,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.cryptocurrencies.bitcoinpos.network.ExchangeRates;
+import com.cryptocurrencies.bitcoinpos.network.Utilities;
+
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
+
 /**
  * Created by kostas on 14/6/2016.
  */
 public class PaymentFragment extends Fragment implements View.OnClickListener {
 
-    private final double maxBTCAmount = 1000;
+    private final double maxBTCAmount = 10000;
 
     Button keypad1, keypad2, keypad3, keypad4, keypad5, keypad6, keypad7, keypad8, keypad9, keypad0, keypadDot, keypadBackspace;
     Button requestPayment;
@@ -30,7 +38,11 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
     CoordinatorLayout coordinatorLayout;
 
     SharedPreferences sharedPreferences;
-    String bitcoinPaymentAddress ;
+    String localCurrency;
+    String bitcoinPaymentAddress;
+
+    // currency conversion variables
+    ExchangeRates fixerEcb;
 
     public PaymentFragment() {
         // Required empty public constructor
@@ -38,7 +50,6 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
 
     }
@@ -49,7 +60,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
 
         // get preferences
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String localCurrency = sharedPreferences.getString(getString(R.string.local_currency_key), "NaN");
+        localCurrency = sharedPreferences.getString(getString(R.string.local_currency_key), "NaN");
         bitcoinPaymentAddress = sharedPreferences.getString(getString(R.string.payment_address_key), "");
 
         // Inflate the layout for this fragment
@@ -96,14 +107,61 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if(Utilities.isNetworkConnectionAvailable(getContext())) {
+            ExchangeRates exchangeRates = ExchangeRates.getInstance();
+            exchangeRates.updateExchangeRates(getContext(), localCurrency);
+        } else {
+            // checks again and then displays... maybe do it manually without method!
+            checkIfNetworkConnectionAvailable();
+        }
+    }
+
+
+    @Override
     public void onClick(View v) {
         if(v instanceof ToggleButton) {
             ToggleButton  currencyToggle = (ToggleButton) v;
             String currentAmount = amount.getText().toString();
-            if(currencyToggle.isChecked()) {
-                // was local currency - convert to BTC
+            ExchangeRates exchangeRates = ExchangeRates.getInstance();
+
+            if(exchangeRates.getLastUpdated() != null && currentAmount != "0") {
+                if(!currencyToggle.isChecked()) {
+                    // was local currency - convert to BTC
+                    // the following was losing precision at every toggling!!
+                    //double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getLocalToBtcRate();
+                    double newAmount = Double.parseDouble(currentAmount) / exchangeRates.getBtcToLocalRate();
+                    DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+                    formatter.setRoundingMode( RoundingMode.DOWN );
+                    amount.setText(formatter.format(newAmount));
+                } else {
+                    // was BTC - convert to local currency
+                    double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getBtcToLocalRate();
+                    DecimalFormat formatter = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+                    formatter.setRoundingMode( RoundingMode.DOWN );
+                    amount.setText(formatter.format(newAmount));
+                }
             } else {
-                // was BTC - convert to local currency
+                // toggle failed -- toggle programmatically to revert
+                currencyToggle.toggle();
+
+                // checks network connection and then displays message with retry
+                // TODO ...snackbar to reconnect ???
+                //checkIfNetworkConnectionAvailable();
+
+                if(!Utilities.isNetworkConnectionAvailable(getContext())) {
+                    Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
+                            .setAction("Retry", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    ExchangeRates exchangeRates = ExchangeRates.getInstance();
+                                    exchangeRates.updateExchangeRates(getContext(), localCurrency);
+                                }
+
+                            });
+                    mesg.show();
+                }
             }
         } else {
             // it is a button!
@@ -139,10 +197,15 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
                         amount.setText(keypad.getText().toString());
                     } else {
                         String newAmount = amount.getText().toString() + keypad.getText().toString();
-                        if (checkValidAmount(newAmount)) {
+                        int error = checkValidAmount(newAmount);
+                        if (error > 0) {
                             amount.setText(newAmount);
                         } else {
-                            Toast.makeText(getContext(), R.string.amount_less_than_1000_message, Toast.LENGTH_SHORT).show();
+                            if(error == -1) {
+                                Toast.makeText(getContext(), R.string.amount_less_than_10000_message, Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getContext(), R.string.amount_has_more_decimals_than_allowed, Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
                     break;
@@ -160,6 +223,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
                         });
                         mesg.show();
                     }
+
+                    checkIfNetworkConnectionAvailable();
                     break;
             }
         }
@@ -167,18 +232,48 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
 
     }
 
-    private boolean checkValidAmount(String amount) {
+    // temporarily returns int to specify the error -- this should be substituted with a proper enum
+    // that ALSO contains the actual strings (from R.string)
+    // Values: -1: GreaterThanAllowedValue, -2: NoMoreDecimalsAllowed
+    private int checkValidAmount(String amount) {
+
+        ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
         double doubleAmount = Double.parseDouble(amount);
         if(currencyToggle.isChecked()) {
             // was local currency
+
+            // allow only 2 decimal digits
+            int dotIndex = amount.indexOf(".");
+            if(dotIndex != -1 && amount.substring(dotIndex).length() > 3)
+                return -2;
+
+            if(exchangeRates.getLastUpdated() != null) {
+                // if equiv amount in BTC should not be more than maxBTCAmount
+                if(doubleAmount / exchangeRates.getBtcToLocalRate() > maxBTCAmount)
+                    return -1;
+            }
         } else {
             // was BTC
+
+            // allow only 8 decimal digits
+            int dotIndex = amount.indexOf(".");
+            if(dotIndex != -1 && amount.substring(dotIndex).length() > 9)
+                return -2;
+
             if(doubleAmount > maxBTCAmount)
-                return false;
+                return -1;
         }
 
-
-        return true;
+        return 1;
     }
+
+
+    private void checkIfNetworkConnectionAvailable() {
+        if(!Utilities.isNetworkConnectionAvailable(getContext())) {
+            Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+
 }
