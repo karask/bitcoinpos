@@ -3,4 +3,8 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="nav_drawer_width">260dp</dimen>
+
+    <dimen name="button_text_size_large">24sp</dimen>
+    <dimen name="button_text_size_normal">18sp</dimen>
+    <dimen name="button_text_size_small">14sp</dimen>
 </resources>

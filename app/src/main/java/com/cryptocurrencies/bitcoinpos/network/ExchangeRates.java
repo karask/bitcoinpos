@@ -73,8 +73,13 @@ public class ExchangeRates {
                             XPathExpression xpathFromBtc = XPathFactory.newInstance().newXPath().compile("/query/results/rate[1]/Rate");
                             XPathExpression xpathToBtc = XPathFactory.newInstance().newXPath().compile("/query/results/rate[2]/Rate");
 
-                            btcToLocalRate = Double.parseDouble((String) xpathFromBtc.evaluate(doc, XPathConstants.STRING));
+                            double exRate = Double.parseDouble((String) xpathFromBtc.evaluate(doc, XPathConstants.STRING));
+                            // use 2 decimal precision rounded up!
+                            btcToLocalRate = Math.round(exRate * 100.0) / 100.0;
+
+                            // not used since exchange rate difference is large
                             //localToBtcRate = Double.parseDouble((String) xpathToBtc.evaluate(doc, XPathConstants.STRING));
+
                             lastUpdated = new Date();
                         } catch (SAXException e) {
                             e.printStackTrace();
@@ -91,7 +96,7 @@ public class ExchangeRates {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d("EXCHANGE ERROR", "FIXXXXXXXXXXXXXXXXXXXX");
+                Log.e("EXCHANGE ERROR", error.toString());
             }
         });
 

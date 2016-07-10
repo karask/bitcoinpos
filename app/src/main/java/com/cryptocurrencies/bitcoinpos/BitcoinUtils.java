@@ -22,6 +22,27 @@ public class BitcoinUtils {
     private BitcoinUtils() {
     }
 
+    public static boolean isAddressUsingBIP21(String addressString) {
+        return addressString.indexOf(":") != -1;
+    }
+
+    public static String getAddressFromBip21String(String addressString) {
+        int bitcoinUriIndex = addressString.indexOf(":");
+        int paramsIndex = addressString.indexOf("?");
+
+        if(bitcoinUriIndex != -1) {
+            // get address from bitcoin uri scheme
+            if(paramsIndex != -1)
+                return addressString.substring(bitcoinUriIndex + 1, paramsIndex);
+            else
+                return addressString.substring(bitcoinUriIndex + 1);
+        } else {
+            // not using BIP 21
+            return addressString;
+        }
+    }
+
+
     public static boolean validateAddress(String address) {
         if (address.length() < 26 || address.length() > 35) return false;
         byte[] decoded = DecodeBase58(address, 58, 25);

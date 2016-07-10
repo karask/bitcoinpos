@@ -25,5 +25,9 @@
 
     </style>
 
+    <!-- Dialog Fragment (Request Payment) -->
+    <style name="RequestPaymentDialogFragment" parent="@style/Theme.AppCompat.Light.Dialog">
+        <item name="android:windowNoTitle">true</item>
+    </style>
 
 </resources>

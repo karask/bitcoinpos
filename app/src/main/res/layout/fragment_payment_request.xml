@@ -1,0 +1,92 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+
+    android:tag="@string/request_payment_fragment_tag"
+    tools:context=".PaymentRequestFragment">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/merchant_name"
+        android:text="@string/merchant_name"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:maxLines="1"
+        android:gravity="center" />
+
+    <ImageView
+        android:layout_gravity="center_horizontal"
+        android:paddingTop="8px"
+        android:paddingBottom="4px"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:scaleType="fitXY"
+        android:src="@android:drawable/divider_horizontal_bright" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/payment_text"
+            android:gravity="right"
+            android:paddingRight="2dp"
+            android:layout_weight="1"
+            android:text="@string/payment_text"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/payment_status"
+            android:gravity="left"
+            android:paddingLeft="2dp"
+            android:layout_weight="1"
+            android:text="@string/payment_pending"/>
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/qr_code_image"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/bitcoin_address"
+        android:paddingBottom="12dp"
+        android:paddingLeft="2dp"
+        android:paddingRight="2dp"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/primary_amount"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/secondary_amount"
+        android:gravity="center" />
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        android:paddingTop="4dp"
+        android:id="@+id/cancel_payment_button"
+        android:layout_gravity="center" />
+
+</LinearLayout>

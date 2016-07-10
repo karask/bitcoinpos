@@ -6,12 +6,14 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v7.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -31,18 +33,17 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
 
     private final double maxBTCAmount = 10000;
 
-    Button keypad1, keypad2, keypad3, keypad4, keypad5, keypad6, keypad7, keypad8, keypad9, keypad0, keypadDot, keypadBackspace;
+    Button keypad1, keypad2, keypad3, keypad4, keypad5, keypad6, keypad7, keypad8, keypad9, keypad0, keypadDot;
+    ImageButton keypadBackspace;
     Button requestPayment;
     ToggleButton currencyToggle;
     TextView amount;
     CoordinatorLayout coordinatorLayout;
 
-    SharedPreferences sharedPreferences;
-    String localCurrency;
-    String bitcoinPaymentAddress;
-
-    // currency conversion variables
-    ExchangeRates fixerEcb;
+    SharedPreferences mSharedPreferences;
+    String mLocalCurrency;
+    String mBitcoinPaymentAddress;
+    String mMerchantName;
 
     public PaymentFragment() {
         // Required empty public constructor
@@ -59,9 +60,10 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
                              Bundle savedInstanceState) {
 
         // get preferences
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        localCurrency = sharedPreferences.getString(getString(R.string.local_currency_key), "NaN");
-        bitcoinPaymentAddress = sharedPreferences.getString(getString(R.string.payment_address_key), "");
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mLocalCurrency = mSharedPreferences.getString(getString(R.string.local_currency_key), getString(R.string.default_currency_code));
+        mBitcoinPaymentAddress = mSharedPreferences.getString(getString(R.string.payment_address_key), "");
+        mMerchantName = mSharedPreferences.getString(getString(R.string.merchant_name_key), "");
 
         // Inflate the layout for this fragment
         View fragmentView = inflater.inflate(R.layout.fragment_payment, container, false);
@@ -72,7 +74,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
 
         currencyToggle = (ToggleButton) fragmentView.findViewById(R.id.currencyToggleButton);
         currencyToggle.setTextOff("BTC");
-        currencyToggle.setTextOn(localCurrency);
+        currencyToggle.setTextOn(mLocalCurrency);
         currencyToggle.setOnClickListener(this);
 
         keypad1 = (Button) fragmentView.findViewById(R.id.btn_1);
@@ -97,7 +99,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
         keypad0.setOnClickListener(this);
         keypadDot = (Button) fragmentView.findViewById(R.id.btn_dot);
         keypadDot.setOnClickListener(this);
-        keypadBackspace = (Button) fragmentView.findViewById(R.id.btn_backspace);
+        keypadBackspace = (ImageButton) fragmentView.findViewById(R.id.btn_backspace);
         keypadBackspace.setOnClickListener(this);
 
         requestPayment = (Button) fragmentView.findViewById(R.id.request_payment);
@@ -111,7 +113,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
         super.onActivityCreated(savedInstanceState);
         if(Utilities.isNetworkConnectionAvailable(getContext())) {
             ExchangeRates exchangeRates = ExchangeRates.getInstance();
-            exchangeRates.updateExchangeRates(getContext(), localCurrency);
+            exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
         } else {
             // checks again and then displays... maybe do it manually without method!
             checkIfNetworkConnectionAvailable();
@@ -122,60 +124,52 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if(v instanceof ToggleButton) {
+            // only one toggle button: currency converter
             ToggleButton  currencyToggle = (ToggleButton) v;
             String currentAmount = amount.getText().toString();
             ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
-            if(exchangeRates.getLastUpdated() != null && currentAmount != "0") {
-                if(!currencyToggle.isChecked()) {
-                    // was local currency - convert to BTC
-                    // the following was losing precision at every toggling!!
-                    //double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getLocalToBtcRate();
-                    double newAmount = Double.parseDouble(currentAmount) / exchangeRates.getBtcToLocalRate();
-                    DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
-                    formatter.setRoundingMode( RoundingMode.DOWN );
-                    amount.setText(formatter.format(newAmount));
-                } else {
-                    // was BTC - convert to local currency
-                    double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getBtcToLocalRate();
-                    DecimalFormat formatter = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
-                    formatter.setRoundingMode( RoundingMode.DOWN );
-                    amount.setText(formatter.format(newAmount));
+            if(exchangeRates.getLastUpdated() != null) {
+                if(currentAmount != "0") {
+                    if (!currencyToggle.isChecked()) {
+                        // was local currency - convert to BTC
+                        amount.setText(getBtcFromLocalCurrency(currentAmount));
+                    } else {
+                        // was BTC - convert to local currency
+                        amount.setText(getLocalCurrencyFromBtc(currentAmount));
+                    }
                 }
             } else {
                 // toggle failed -- toggle programmatically to revert
                 currencyToggle.toggle();
 
                 // checks network connection and then displays message with retry
-                // TODO ...snackbar to reconnect ???
-                //checkIfNetworkConnectionAvailable();
-
                 if(!Utilities.isNetworkConnectionAvailable(getContext())) {
                     Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
                             .setAction("Retry", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                     ExchangeRates exchangeRates = ExchangeRates.getInstance();
-                                    exchangeRates.updateExchangeRates(getContext(), localCurrency);
+                                    exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
                                 }
 
                             });
                     mesg.show();
                 }
             }
+        } else if(v instanceof ImageButton) {
+            // only one image button: backspace
+            String currentAmount = amount.getText().toString();
+            // delete last digit
+            currentAmount = currentAmount.substring(0, currentAmount.length() - 1);
+            if (currentAmount.length() == 0)
+                amount.setText("0");
+            else
+                amount.setText(currentAmount);
         } else {
             // it is a button!
             Button keypad = (Button) v;
             switch (keypad.getId()) {
-                case R.id.btn_backspace:
-                    String currentAmount = amount.getText().toString();
-                    // delete last digit
-                    currentAmount = currentAmount.substring(0, currentAmount.length() - 1);
-                    if (currentAmount.length() == 0)
-                        amount.setText("0");
-                    else
-                        amount.setText(currentAmount);
-                    break;
                 case R.id.btn_dot:
                     // if another dot does not exists
                     if (amount.getText().toString().indexOf(".") == -1) {
@@ -211,7 +205,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
                     break;
 
                 case R.id.request_payment:
-                    if (bitcoinPaymentAddress.isEmpty() || BitcoinUtils.validateAddress(bitcoinPaymentAddress)) {
+                    if (mBitcoinPaymentAddress.isEmpty() || !BitcoinUtils.validateAddress(mBitcoinPaymentAddress)) {
                         Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_bitcoin_address_message, Snackbar.LENGTH_INDEFINITE)
                                 .setAction("Settings", new View.OnClickListener() {
                             @Override
@@ -222,10 +216,27 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
 
                         });
                         mesg.show();
+                    } else if(amount.getText().toString().equals("0")) {
+                        Toast.makeText(getContext(), R.string.amount_cannot_be_zero, Toast.LENGTH_SHORT).show();
+                    } else if(checkIfNetworkConnectionAvailable()) {
+                        String primaryAmount, secondaryAmount;
+                        if (currencyToggle.isChecked()) {
+                            // was local currency - convert to BTC
+                            primaryAmount = "(" + amount.getText().toString() + " " + mLocalCurrency + ")";
+                            secondaryAmount = getBtcFromLocalCurrency(amount.getText().toString()) + " BTC";
+                        } else {
+                            // was BTC - convert to local currency
+                            primaryAmount = amount.getText().toString() + " BTC";
+                            secondaryAmount = "(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+                        }
+
+                        DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount, secondaryAmount);
+                        // for API >= 23 the title is disable by default -- we set a style that enables it
+                        myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
+                        myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));
+                        break;
                     }
 
-                    checkIfNetworkConnectionAvailable();
-                    break;
             }
         }
 
@@ -268,11 +279,36 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
         return 1;
     }
 
+    private String getLocalCurrencyFromBtc(String amount) {
 
-    private void checkIfNetworkConnectionAvailable() {
+        ExchangeRates exchangeRates = ExchangeRates.getInstance();
+
+        double newAmount = Double.parseDouble(amount) * exchangeRates.getBtcToLocalRate();
+        DecimalFormat formatter = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        formatter.setRoundingMode( RoundingMode.DOWN );
+        return formatter.format(newAmount);
+    }
+
+    private String getBtcFromLocalCurrency(String amount) {
+
+        ExchangeRates exchangeRates = ExchangeRates.getInstance();
+
+        // the following was losing precision at every toggling!!
+        //double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getLocalToBtcRate();
+
+        double newAmount = Double.parseDouble(amount) / exchangeRates.getBtcToLocalRate();
+        DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        formatter.setRoundingMode( RoundingMode.DOWN );
+        return formatter.format(newAmount);
+    }
+
+    private boolean checkIfNetworkConnectionAvailable() {
         if(!Utilities.isNetworkConnectionAvailable(getContext())) {
             Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_SHORT).show();
+            return false;
         }
+
+        return true;
     }
 
 

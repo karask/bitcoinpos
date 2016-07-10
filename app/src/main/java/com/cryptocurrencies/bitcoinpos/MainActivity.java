@@ -10,7 +10,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements PaymentRequestFragment.OnFragmentInteractionListener {
 
     private Toolbar mToolbar;
     private TabLayout mTabLayout;
@@ -120,6 +120,15 @@ public class MainActivity extends AppCompatActivity {
         Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
         startActivity(goToSettings);
 
+    }
+
+
+
+
+    // implements PaymentRequestFragment inner interface methods
+    public void onPaymentCancellation() {
+        // close dialog fragment
+        getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentByTag(getString(R.string.request_payment_fragment_tag))).commit();
     }
 
 

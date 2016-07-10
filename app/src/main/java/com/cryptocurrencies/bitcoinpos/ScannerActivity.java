@@ -11,6 +11,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
@@ -78,7 +79,6 @@ public class ScannerActivity extends AppCompatActivity {
                 .Builder(getApplicationContext(), mBarcodeDetector)
                 .setAutoFocusEnabled(true)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
-
                 //.setRequestedPreviewSize(cameraWidth, cameraWidth)
                 .build();
 
@@ -125,7 +125,17 @@ public class ScannerActivity extends AppCompatActivity {
                     mediaPlayer.start();
 
                     // get detected value and validate
-                    String address = barcodes.valueAt(0).displayValue;
+                    String addressString = barcodes.valueAt(0).displayValue;
+                    String address;
+                    Log.d("SCANNER ADDRESS", addressString);
+
+                    // if BIP 21 is used get the address
+                    if(BitcoinUtils.isAddressUsingBIP21(addressString)) {
+                        address = BitcoinUtils.getAddressFromBip21String(addressString);
+                    } else {
+                        address = addressString;
+                    }
+
                     boolean isAddressValid = BitcoinUtils.validateAddress(address);
                     if(isAddressValid) {
                         // set appropriate setting/preference

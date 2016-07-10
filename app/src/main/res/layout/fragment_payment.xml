@@ -172,13 +172,13 @@
                 android:layout_height="match_parent"
                 android:text="0" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btn_backspace"
                 android:background="@color/numpad_selector"
                 android:layout_width="0px"
                 android:layout_weight="1"
                 android:layout_height="match_parent"
-                android:text="D" />
+                android:src="@drawable/ic_backspace_black_18dp" />
 
         </LinearLayout>
 

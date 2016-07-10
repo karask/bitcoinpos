@@ -21,7 +21,6 @@
 
     <string name="scan_qr_code">Scan QR Code</string>
 
-    <string name="default_currency_code">EUR</string>
     <string name="invalid_bitcoin_address_message">This was not a valid Bitcoin address</string>
     <string name="add_payment_address_title">Add payment address</string>
     <string name="add_payment_address_message">Please scan a Bitcoin address QR code or just paste the address.</string>
@@ -31,6 +30,10 @@
     <string name="amount_has_more_decimals_than_allowed">You have reached the limit of the decimals allowed for the currency !</string>
     <string name="specify_valid_bitcoin_address_message">Please specify a valid Bitcoin address to receive payments</string>
     <string name="network_connection_not_available_message">Network connection is not available</string>
+    <string name="request_payment_fragment_tag">request_payment_fragment_tag</string>
+
+    <string name="payment_text">Payment:</string>
+    <string name="payment_pending">Pending</string>
 
     <string-array name="currency_codes">
         <item>@string/default_currency_code</item>
@@ -43,5 +46,8 @@
         <item>US Dollar</item>
         <item>Pound Sterling</item>
     </string-array>
+
+    <string name="default_currency_code">EUR</string>
+    <string name="amount_cannot_be_zero">Amount cannot be zero</string>
 
 </resources>
