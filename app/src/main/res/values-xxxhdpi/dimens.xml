@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="button_text_size_large">8sp</dimen>
-    <dimen name="button_text_size_normal">6sp</dimen>
-    <dimen name="button_text_size_small">4sp</dimen>
+    <dimen name="button_text_size_large">6sp</dimen>
+    <dimen name="button_text_size_normal">4sp</dimen>
+    <dimen name="button_text_size_small">2sp</dimen>
 </resources>
