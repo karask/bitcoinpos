@@ -26,6 +26,11 @@ public class BitcoinUtils {
         return addressString.indexOf(":") != -1;
     }
 
+    // easy way to change between testnet and mainnet
+    public static boolean isMainNet() {
+        return false;
+    }
+
     public static String getAddressFromBip21String(String addressString) {
         int bitcoinUriIndex = addressString.indexOf(":");
         int paramsIndex = addressString.indexOf("?");
@@ -44,6 +49,10 @@ public class BitcoinUtils {
 
 
     public static boolean validateAddress(String address) {
+
+        // if testnet do not validate
+        if(!isMainNet()) return true;
+
         if (address.length() < 26 || address.length() > 35) return false;
         byte[] decoded = DecodeBase58(address, 58, 25);
         if (decoded == null) return false;

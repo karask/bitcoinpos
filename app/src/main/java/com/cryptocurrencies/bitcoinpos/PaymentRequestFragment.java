@@ -9,6 +9,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -19,13 +20,27 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
+import com.cryptocurrencies.bitcoinpos.network.BitcoinNetwork;
+import com.cryptocurrencies.bitcoinpos.network.Requests;
 import com.google.android.gms.vision.text.Text;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.DecimalFormat;
+import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -37,18 +52,20 @@ import com.google.zxing.common.BitMatrix;
  * create an instance of this fragment.
  */
 public class PaymentRequestFragment extends DialogFragment  {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+
     private static final String ARG_BITCOIN_ADDRESS = "bitcoinAddress";
     private static final String ARG_MERCHANT_NAME = "merchantName";
     private static final String ARG_PRIMARY_AMOUNT = "primaryAmount";
     private static final String ARG_SECONDARY_AMOUNT = "secondaryAmount";
+    private static final String ARG_BITCOIN_IS_PRIMARY = "bitcoinIsPrimary";
+    private static final String ARG_LOCAL_CURRENCY = "localCurrency";
 
-    // TODO: Rename and change types of parameters
     private String mBitcoinAddress;
     private String mMerchantName;
     private String mPrimaryAmount;
     private String mSecondaryAmount;
+    private boolean mBitcoinIsPrimary;
+    private String mLocalCurrency;
 
     private ImageView mQrCodeImage;
     private Bitmap mQrCodeBitmap;
@@ -61,6 +78,9 @@ public class PaymentRequestFragment extends DialogFragment  {
     private TextView mPaymentStatusTextView;
 
     private Button mCancelButton;
+
+    private Timer mTimer;
+    private String mPaymentTransaction = null;
 
     private OnFragmentInteractionListener mListener;
 
@@ -76,16 +96,20 @@ public class PaymentRequestFragment extends DialogFragment  {
      * @param merchantName Parameter 2.
      * @param primaryAmount
      * @param secondaryAmount
+     * @param bitcoinIsPrimary
+     * @param localCurrency
      * @return A new instance of fragment PaymentRequestFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount) {
+    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount, boolean bitcoinIsPrimary, String localCurrency) {
         PaymentRequestFragment fragment = new PaymentRequestFragment();
         Bundle args = new Bundle();
         args.putString(ARG_BITCOIN_ADDRESS, bitcoinAddress);
         args.putString(ARG_MERCHANT_NAME, merchantName);
         args.putString(ARG_PRIMARY_AMOUNT, primaryAmount);
         args.putString(ARG_SECONDARY_AMOUNT, secondaryAmount);
+        args.putBoolean(ARG_BITCOIN_IS_PRIMARY, bitcoinIsPrimary);
+        args.putString(ARG_LOCAL_CURRENCY, localCurrency);
         fragment.setArguments(args);
         return fragment;
     }
@@ -99,7 +123,8 @@ public class PaymentRequestFragment extends DialogFragment  {
             mMerchantName = getArguments().getString(ARG_MERCHANT_NAME);
             mPrimaryAmount = getArguments().getString(ARG_PRIMARY_AMOUNT);
             mSecondaryAmount = getArguments().getString(ARG_SECONDARY_AMOUNT);
-
+            mBitcoinIsPrimary = getArguments().getBoolean(ARG_BITCOIN_IS_PRIMARY);
+            mLocalCurrency = getArguments().getString(ARG_LOCAL_CURRENCY);
             //Find screen size
             WindowManager manager = (WindowManager) getActivity().getSystemService(getContext().WINDOW_SERVICE);
             Display display = manager.getDefaultDisplay();
@@ -112,7 +137,15 @@ public class PaymentRequestFragment extends DialogFragment  {
 
             // generate QR code to show in image view
             try {
-                mQrCodeBitmap = encodeAsBitmap(mBitcoinAddress, smallerDimension); //(mBitcoinAddress);
+                String bip21Payment;
+                if(BitcoinUtils.isMainNet()) {
+                    // generate BIP 21 compatible payment URI
+                    bip21Payment = "bitcoin:" + mBitcoinAddress + "?amount=" + (mBitcoinIsPrimary ? mPrimaryAmount : mSecondaryAmount) + "&label=" + mMerchantName;
+                } else {
+                    // in testnet ignore BIP 21 (wallet using to send tBTC does not support BIP 21...
+                    bip21Payment = mBitcoinAddress;
+                }
+                mQrCodeBitmap = encodeAsBitmap(bip21Payment, smallerDimension); //(mBitcoinAddress);
             } catch (WriterException e) {
                 e.printStackTrace();
             }
@@ -144,17 +177,29 @@ public class PaymentRequestFragment extends DialogFragment  {
         mBitcoinAddressTextView.setTextSize(getResources().getDimension(R.dimen.button_text_size_small));
         mBitcoinAddressTextView.setText(mBitcoinAddress);
 
+        // TODO put "BTC" in strings.xml
+
+        String primaryAmountToDisplay, secondaryAmountToDisplay;
+        if (mBitcoinIsPrimary) {
+            primaryAmountToDisplay = mPrimaryAmount + " BTC";
+            secondaryAmountToDisplay = "(" + mSecondaryAmount + " " + mLocalCurrency + ")";
+        } else {
+            primaryAmountToDisplay = mPrimaryAmount + " " + mLocalCurrency;
+            secondaryAmountToDisplay = "(" + mSecondaryAmount + " BTC)";
+        }
+
         mPrimaryAmountTextView = (TextView) fragmentView.findViewById(R.id.primary_amount);
         mPrimaryAmountTextView.setTextColor(ContextCompat.getColor(getContext(), android.R.color.black));
-        mPrimaryAmountTextView.setText(mPrimaryAmount);
+        mPrimaryAmountTextView.setText(primaryAmountToDisplay);
 
         mSecondaryAmountTextView = (TextView) fragmentView.findViewById(R.id.secondary_amount);
-        mSecondaryAmountTextView.setText(mSecondaryAmount);
+        mSecondaryAmountTextView.setText(secondaryAmountToDisplay);
 
         mCancelButton = (Button) fragmentView.findViewById(R.id.cancel_payment_button);
         mCancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // call parents method to close dialog fragment
                 mListener.onPaymentCancellation();
             }
         });
@@ -165,11 +210,31 @@ public class PaymentRequestFragment extends DialogFragment  {
         return fragmentView;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onPaymentCancellation();
-        }
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+
+        mTimer= new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                double amount;
+                if (mBitcoinIsPrimary) {
+                    amount = Double.parseDouble(mPrimaryAmount);
+                } else {
+                    amount = Double.parseDouble(mSecondaryAmount);
+                }
+
+                if (mPaymentTransaction == null) {
+                    Log.d("CHECK FOR UNCONFIRMED", amount + "!");
+                    updateIfUnconfirmedTxId(mBitcoinAddress, amount);
+                } else {
+                    Log.d("CHECK FOR CONFIRMED", mPaymentTransaction);
+                    updateIfTxConfirmed(mPaymentTransaction);
+                }
+            }
+        }, 0, 3000);
+
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -186,6 +251,11 @@ public class PaymentRequestFragment extends DialogFragment  {
     @Override
     public void onDetach() {
         super.onDetach();
+
+        // stop network request timer
+        if(mTimer != null)
+            mTimer.cancel();
+
         mListener = null;
     }
 
@@ -204,10 +274,6 @@ public class PaymentRequestFragment extends DialogFragment  {
     public interface OnFragmentInteractionListener {
         void onPaymentCancellation();
     }
-
-
-
-
 
 
 
@@ -276,5 +342,119 @@ public class PaymentRequestFragment extends DialogFragment  {
 //        }
 //        return null;
 //    }
+
+
+    // TODO what if we have > 1 tx on the exact amount the last 2 minutes?
+    // get recent tx status of specific amount on specific bitcoin address
+    private void updateIfUnconfirmedTxId(String bitcoinAddress, final double amount) {
+        String url;
+        if(BitcoinUtils.isMainNet()) {
+            url = "http://btc.blockr.io/api/v1/address/unconfirmed/" + bitcoinAddress;
+        } else {
+            url = "http://tbtc.blockr.io/api/v1/address/unconfirmed/" + bitcoinAddress;
+        }
+
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("UNCONFIRMED TX ID", response.toString());
+                        try {
+                            if(response.getString("status").equals("success")) {
+                                // get the last transaction for this amount on that address (if it exists)
+                                JSONArray unconfirmedTxs = response.getJSONObject("data").getJSONArray("unconfirmed");
+                                if(unconfirmedTxs.length() == 0) {
+                                    // do nothing, TX not visible in the network
+                                } else {
+                                    for(int i=0; i<unconfirmedTxs.length(); i++) {
+                                        JSONObject txObj = (JSONObject) unconfirmedTxs.get(i);
+                                        Log.d("UNCONFIRMED AMOUNTS", txObj.getDouble("amount") + "=" + amount);
+                                        if(txObj.getDouble("amount") == amount) {     // if same amount
+                                            // TODO also check recent TX!
+
+                                            // if found remember the transaction id and use only this for confirmations
+                                            mPaymentTransaction = txObj.getString("tx");
+                                            mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
+                                            mPaymentStatusTextView.setText(R.string.payment_unconfirmed);
+
+                                            mCancelButton.setText(R.string.ok);
+
+                                            // TODO payment was visible... write to transaction history
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("UNCONFIRMED TX ID ERROR", error.toString());
+                    }
+                });
+
+        Requests.getInstance(getContext()).addToRequestQueue(jsObjRequest);
+
+    }
+
+
+
+
+    // check if unconfirmed transaction was confirmed (uses mPaymentTransaction stored from getUnconfirmedTxId)
+    private void updateIfTxConfirmed(String tx) {
+        String url;
+        if(BitcoinUtils.isMainNet()) {
+            url = "http://btc.blockr.io/api/v1/tx/info/" + tx;
+        } else {
+            url = "http://tbtc.blockr.io/api/v1/tx/info/" + tx;
+        }
+
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("CONFIRMED TX", response.toString());
+                        try {
+                            if(response.getString("status").equals("success")) {
+                                // get the last transaction for this amount on that address (if it exists)
+                                int confirmations = response.getJSONObject("data").getInt("confirmations");
+                                if(confirmations > 0) {
+                                    // Transaction was confirmed - stop the timer/repetitions
+                                    if(mTimer != null)
+                                        mTimer.cancel();
+
+                                    // if found transaction was confirmed
+                                    mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.bright_green));
+                                    mPaymentStatusTextView.setText(R.string.payment_confirmed);
+
+
+                                    // TODO update transaction history
+                                }
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("CONFIRMED TX ERROR", error.toString());
+                    }
+                });
+
+        Requests.getInstance(getContext()).addToRequestQueue(jsObjRequest);
+
+    }
+
+
+
 
 }

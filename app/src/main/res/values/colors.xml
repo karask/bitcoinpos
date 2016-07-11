@@ -10,4 +10,6 @@
     <color name="colorTextIcons">#FFFFFF</color>
     <color name="colorDivider">#FFFFFF</color>
 
+    <color name="bright_green">#7ff06b</color>
+
 </resources>

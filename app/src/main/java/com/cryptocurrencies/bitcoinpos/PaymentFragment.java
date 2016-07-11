@@ -75,6 +75,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
         currencyToggle = (ToggleButton) fragmentView.findViewById(R.id.currencyToggleButton);
         currencyToggle.setTextOff("BTC");
         currencyToggle.setTextOn(mLocalCurrency);
+        currencyToggle.toggle();
         currencyToggle.setOnClickListener(this);
 
         keypad1 = (Button) fragmentView.findViewById(R.id.btn_1);
@@ -220,17 +221,20 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
                         Toast.makeText(getContext(), R.string.amount_cannot_be_zero, Toast.LENGTH_SHORT).show();
                     } else if(checkIfNetworkConnectionAvailable()) {
                         String primaryAmount, secondaryAmount;
+                        boolean isPrimaryAmount;
                         if (currencyToggle.isChecked()) {
                             // was local currency - convert to BTC
-                            primaryAmount = "(" + amount.getText().toString() + " " + mLocalCurrency + ")";
-                            secondaryAmount = getBtcFromLocalCurrency(amount.getText().toString()) + " BTC";
+                            primaryAmount = amount.getText().toString(); //+ " " + mLocalCurrency;
+                            secondaryAmount = getBtcFromLocalCurrency(amount.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
+                            isPrimaryAmount = false;
                         } else {
                             // was BTC - convert to local currency
-                            primaryAmount = amount.getText().toString() + " BTC";
-                            secondaryAmount = "(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+                            primaryAmount = amount.getText().toString(); // + " BTC";
+                            secondaryAmount = getLocalCurrencyFromBtc(amount.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+                            isPrimaryAmount = true;
                         }
 
-                        DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount, secondaryAmount);
+                        DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount, secondaryAmount, isPrimaryAmount, mLocalCurrency);
                         // for API >= 23 the title is disable by default -- we set a style that enables it
                         myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
                         myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));

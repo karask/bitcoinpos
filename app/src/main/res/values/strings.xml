@@ -34,6 +34,8 @@
 
     <string name="payment_text">Payment:</string>
     <string name="payment_pending">Pending</string>
+    <string name="payment_unconfirmed">Unconfirmed</string>
+    <string name="payment_confirmed">Confirmed</string>
 
     <string-array name="currency_codes">
         <item>@string/default_currency_code</item>
@@ -49,5 +51,7 @@
 
     <string name="default_currency_code">EUR</string>
     <string name="amount_cannot_be_zero">Amount cannot be zero</string>
+    <string name="ok">OK</string>
+
 
 </resources>

@@ -8,6 +8,7 @@
 ## Notes
 * BTC to local currency conversion rate is used both ways. Local currency to BTC differs more so the amount in UI would be different between conversions
 * Still due to decimal precision between conversions of the amount there will still be very slight precision variations!
+* Requires client's wallet to support BIP 21 URI scheme
 
 ## Known Issues
 * Support API >= 14?? (depends on the scanning for now)
