@@ -1,17 +1,16 @@
 package com.cryptocurrencies.bitcoinpos;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
 import android.util.Log;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,10 +23,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.cryptocurrencies.bitcoinpos.network.BitcoinNetwork;
 import com.cryptocurrencies.bitcoinpos.network.Requests;
-import com.google.android.gms.vision.text.Text;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
@@ -37,8 +33,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.DecimalFormat;
-import java.util.Iterator;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -81,6 +77,8 @@ public class PaymentRequestFragment extends DialogFragment  {
 
     private Timer mTimer;
     private String mPaymentTransaction = null;
+
+    private TransactionHistoryDb mDbHelper;
 
     private OnFragmentInteractionListener mListener;
 
@@ -213,6 +211,11 @@ public class PaymentRequestFragment extends DialogFragment  {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
 
+        // instantiate DB
+        if(mDbHelper == null)
+            mDbHelper = new TransactionHistoryDb(getContext());
+
+        // setup timer to check network for unconfirmed/confirmed transactions
         mTimer= new Timer();
         mTimer.schedule(new TimerTask() {
             @Override
@@ -354,6 +357,8 @@ public class PaymentRequestFragment extends DialogFragment  {
             url = "http://tbtc.blockr.io/api/v1/address/unconfirmed/" + bitcoinAddress;
         }
 
+        // TODO BLOCKR JSON attributes should be captured into static vars to avoid manual repetition
+        // http://blockr.io/documentation/api
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -378,9 +383,25 @@ public class PaymentRequestFragment extends DialogFragment  {
                                             mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
                                             mPaymentStatusTextView.setText(R.string.payment_unconfirmed);
 
+                                            // update cancel button
                                             mCancelButton.setText(R.string.ok);
 
-                                            // TODO payment was visible... write to transaction history
+                                            // payment is now visible to the network / write to transaction history
+                                            Date date = new Date(); // get current date as Json's time_utc has the time that the tx was initially sent (not confirmed!)
+                                            SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'");
+                                            String createdAt = dt.format(date);
+
+                                            double btcAmount, localAmount;
+                                            if(mBitcoinIsPrimary) {
+                                                btcAmount = Double.parseDouble(mPrimaryAmount);
+                                                localAmount = Double.parseDouble(mSecondaryAmount);
+                                            } else {
+                                                btcAmount = Double.parseDouble(mSecondaryAmount);
+                                                localAmount = Double.parseDouble(mPrimaryAmount);
+                                            }
+
+                                            addTransaction(mPaymentTransaction, btcAmount, localAmount, mLocalCurrency,
+                                                    createdAt, null, mMerchantName, mBitcoinAddress, false);
                                         }
                                     }
                                 }
@@ -404,9 +425,8 @@ public class PaymentRequestFragment extends DialogFragment  {
 
 
 
-
     // check if unconfirmed transaction was confirmed (uses mPaymentTransaction stored from getUnconfirmedTxId)
-    private void updateIfTxConfirmed(String tx) {
+    private void updateIfTxConfirmed(final String tx) {
         String url;
         if(BitcoinUtils.isMainNet()) {
             url = "http://btc.blockr.io/api/v1/tx/info/" + tx;
@@ -433,8 +453,9 @@ public class PaymentRequestFragment extends DialogFragment  {
                                     mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.bright_green));
                                     mPaymentStatusTextView.setText(R.string.payment_confirmed);
 
-
-                                    // TODO update transaction history
+                                    // transaction was confirmed / update transaction history
+                                    String confirmedAt = response.getJSONObject("data").getString("time_utc");
+                                    updateTransactionToConfirmed(tx, confirmedAt);
                                 }
                             }
                         } catch (JSONException e) {
@@ -455,6 +476,38 @@ public class PaymentRequestFragment extends DialogFragment  {
     }
 
 
+    private void addTransaction(String txId, double btcAmount,
+                                double localAmount, String localCurrency,
+                                String createdAt, String confirmedAt,
+                                String merchantName, String bitcoinAddress,
+                                boolean isConfirmed) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID, txId);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btcAmount);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, localAmount);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY, localCurrency);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT, createdAt);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
+
+        db.insert(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, null, values);
+    }
+
+    private void updateTransactionToConfirmed(String txId, String confirmedAt) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, true);
+        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
+
+        // row to update
+        String selection = TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID + " LIKE ?";
+        String[] selectioinArgs = {String.valueOf(txId) };
+
+        int count = db.update(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, values, selection, selectioinArgs);
+    }
 
 
 }

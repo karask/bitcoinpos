@@ -4,6 +4,7 @@
 
 ## Features
 * Uses Yahoo Finance API for conversion rates between currencies
+* Uses Blockr API for now (could be easily extended to support other APIs, directly the Bitcoin network or both)
 
 ## Notes
 * BTC to local currency conversion rate is used both ways. Local currency to BTC differs more so the amount in UI would be different between conversions

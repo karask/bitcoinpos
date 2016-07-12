@@ -22,13 +22,13 @@ public class BitcoinUtils {
     private BitcoinUtils() {
     }
 
-    public static boolean isAddressUsingBIP21(String addressString) {
-        return addressString.indexOf(":") != -1;
-    }
-
     // easy way to change between testnet and mainnet
     public static boolean isMainNet() {
         return false;
+    }
+
+    public static boolean isAddressUsingBIP21(String addressString) {
+        return addressString.indexOf(":") != -1;
     }
 
     public static String getAddressFromBip21String(String addressString) {
