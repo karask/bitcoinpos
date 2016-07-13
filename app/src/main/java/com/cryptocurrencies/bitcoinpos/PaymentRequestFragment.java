@@ -2,6 +2,7 @@ package com.cryptocurrencies.bitcoinpos;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -387,9 +388,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                                             mCancelButton.setText(R.string.ok);
 
                                             // payment is now visible to the network / write to transaction history
-                                            Date date = new Date(); // get current date as Json's time_utc has the time that the tx was initially sent (not confirmed!)
-                                            SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'");
-                                            String createdAt = dt.format(date);
+                                            String createdAt = txObj.getString("time_utc");
 
                                             double btcAmount, localAmount;
                                             if(mBitcoinIsPrimary) {
@@ -482,18 +481,28 @@ public class PaymentRequestFragment extends DialogFragment  {
                                 String merchantName, String bitcoinAddress,
                                 boolean isConfirmed) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID, txId);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btcAmount);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, localAmount);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY, localCurrency);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT, createdAt);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
 
-        db.insert(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, null, values);
+        // make sure transaction entry does not already exist:
+        String[] tableColumns = { TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID };
+        String whereClause = TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID + " = ?";
+        String[] whereArgs = { txId };
+        Cursor c = db.query(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, whereArgs, null, null, null);
+
+        // if no row found with that txId add the transaction
+        if(c != null && c.getCount() == 0) {
+            ContentValues values = new ContentValues();
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID, txId);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btcAmount);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, localAmount);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY, localCurrency);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT, createdAt);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
+
+            db.insert(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, null, values);
+        }
     }
 
     private void updateTransactionToConfirmed(String txId, String confirmedAt) {
