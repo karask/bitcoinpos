@@ -1,15 +1,41 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.cryptocurrencies.bitcoinpos.HistoryFragment">
 
+    <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="@string/history"-->
+        <!--android:textSize="40dp"-->
+        <!--android:textStyle="bold"-->
+        <!--android:layout_centerInParent="true"/>-->
+
     <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="amount"
+        android:layout_weight="0.3"
+        android:padding="10dp"
+        android:textAlignment="textEnd"
+        android:gravity="end"
+        android:id="@+id/transaction_history_amount"/>
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="date and time"
+        android:layout_weight="0.6"
+        android:padding="10dp"
+        android:gravity="center"
+        android:id="@+id/transaction_history_date"/>
+
+    <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/history"
-        android:textSize="40dp"
-        android:textStyle="bold"
-        android:layout_centerInParent="true"/>
+        android:layout_weight="0.1"
+        android:src="@drawable/ic_tick_green_24dp"
+        android:id="@+id/transaction_history_is_confirmed"/>
 
-</RelativeLayout>
+</LinearLayout>

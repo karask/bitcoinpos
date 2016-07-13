@@ -22,3 +22,4 @@
 * use zxing to display QR code image (and then zxing to scan QR codes as well ?????
     - http://stackoverflow.com/questions/18543668/integrate-zxing-in-android-studio
     
+* Test with multisig account!!
