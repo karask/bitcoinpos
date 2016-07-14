@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos;
+package com.cryptocurrencies.bitcoinpos.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -39,7 +39,7 @@ public class TransactionHistoryDb extends SQLiteOpenHelper {
     private static final String TRANSACTIONS_TABLE_DELETE =
             "DROP TABLE IF EXISTS " + TRANSACTIONS_TABLE_NAME;
 
-    TransactionHistoryDb(Context context) {
+    public TransactionHistoryDb(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 

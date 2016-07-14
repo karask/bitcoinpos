@@ -80,6 +80,26 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(mTabLayout));
 
         /*
+            Adding another listener to act when a fragment becomes visible!
+         */
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                // assumes that FragmentIsNowVisible interface is implemented in all fragments!
+                FragmentIsNowVisible fragment = (FragmentIsNowVisible) mViewPagerAdapter.getItem(position);
+                if(fragment != null)
+                    fragment.doWhenFragmentBecomesVisible();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+        });
+
+        /*
             Adding a onTabSelectedListener to the mTabLayout
             We add the TabSelectedListener and pass a ViewPagerOnTabSelectedListener so that mViewPager
             Selection changes when a tab layout changes.

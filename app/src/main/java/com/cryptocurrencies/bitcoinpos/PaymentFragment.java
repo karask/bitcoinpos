@@ -29,7 +29,7 @@ import java.util.Locale;
 /**
  * Created by kostas on 14/6/2016.
  */
-public class PaymentFragment extends Fragment implements View.OnClickListener {
+public class PaymentFragment extends Fragment implements View.OnClickListener, FragmentIsNowVisible {
 
     private final double maxBTCAmount = 10000;
 
@@ -316,4 +316,9 @@ public class PaymentFragment extends Fragment implements View.OnClickListener {
     }
 
 
+    @Override
+    public void doWhenFragmentBecomesVisible() {
+        // nothing to do when it becomes visible for now
+        // TODO could update the exchange rates!
+    }
 }

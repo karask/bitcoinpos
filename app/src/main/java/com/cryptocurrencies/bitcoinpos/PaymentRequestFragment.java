@@ -24,6 +24,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.cryptocurrencies.bitcoinpos.database.TransactionHistoryDb;
 import com.cryptocurrencies.bitcoinpos.network.Requests;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
@@ -34,8 +35,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -217,7 +216,7 @@ public class PaymentRequestFragment extends DialogFragment  {
             mDbHelper = new TransactionHistoryDb(getContext());
 
         // setup timer to check network for unconfirmed/confirmed transactions
-        mTimer= new Timer();
+        mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -423,7 +422,7 @@ public class PaymentRequestFragment extends DialogFragment  {
     }
 
 
-
+    // TODO USED from both here and HistoryFragment ... move to another class that represents Blockr API !!!
     // check if unconfirmed transaction was confirmed (uses mPaymentTransaction stored from getUnconfirmedTxId)
     private void updateIfTxConfirmed(final String tx) {
         String url;
