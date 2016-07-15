@@ -3,6 +3,8 @@
 
 
 ## Features
+* Supports API version >= 15
+* Supports BIP 21 URI scheme
 * Uses Yahoo Finance API for conversion rates between currencies
 * Uses Blockr API for now (could be easily extended to support other APIs, directly the Bitcoin network or both)
 
@@ -12,14 +14,8 @@
 * Requires client's wallet to support BIP 21 URI scheme
 
 ## Known Issues
-* Support API >= 14?? (depends on the scanning for now)
-    - however QR code scanning is supported from API >= 21
-    - QR code issues even for >=21 ... either googles fixes or we change to zbar/zxing
 * validate address is not working for (???) HD address (different checksum method?)
 
-## TODO
-* Request Payment button goes to floating fragment and shows QR code for payment (check BIPs!) and updated exchangeRates (if connection available!)
-* use zxing to display QR code image (and then zxing to scan QR codes as well ?????
-    - http://stackoverflow.com/questions/18543668/integrate-zxing-in-android-studio
-    
+## TODO    
 * Test with multisig account!!
+* Test with HD addresses

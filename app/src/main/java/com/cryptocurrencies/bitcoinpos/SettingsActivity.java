@@ -1,12 +1,8 @@
 package com.cryptocurrencies.bitcoinpos;
 
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.ListPreference;
@@ -18,9 +14,13 @@ import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -74,7 +74,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static class SettingsFragment extends PreferenceFragmentCompat  implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-        SharedPreferences sharedPreferences;
+        SharedPreferences mSharedPreferences;
         private final int REQUEST_PERMISSION_CAMERA=1;
 
         @Override
@@ -86,10 +86,10 @@ public class SettingsActivity extends AppCompatActivity {
             ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
 
             // Set preferences' values to summaries by reusing onSharedPreferenceChanged
-            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            onSharedPreferenceChanged(sharedPreferences, getString(R.string.merchant_name_key));
-            onSharedPreferenceChanged(sharedPreferences, getString(R.string.payment_address_key));
-            onSharedPreferenceChanged(sharedPreferences, getString(R.string.local_currency_key));
+            mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            onSharedPreferenceChanged(mSharedPreferences, getString(R.string.merchant_name_key));
+            onSharedPreferenceChanged(mSharedPreferences, getString(R.string.payment_address_key));
+            onSharedPreferenceChanged(mSharedPreferences, getString(R.string.local_currency_key));
         }
 
         @Override
@@ -118,34 +118,33 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public boolean onPreferenceTreeClick(final Preference preference) {
             if(preference.getKey().equals(getString(R.string.payment_address_key))) {
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setTitle(R.string.add_payment_address_title);
                 builder.setMessage(getString(R.string.add_payment_address_message));
+                setTargetFragment(this, 0);
 
-                // get camera's permission
-                int permissionCheck = ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
-                        android.Manifest.permission.CAMERA);
+                // SCAN button
+                builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        IntentIntegrator integrator = IntentIntegrator.forSupportFragment(getTargetFragment());
+                        integrator.setBeepEnabled(true);
+                        integrator.setOrientationLocked(true);
+                        integrator.setCaptureActivity(ScanQrCodeActivity.class);
+                        integrator.setPrompt(getString(R.string.scan_qr_code_prompt));
+                        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+                        integrator.initiateScan();
+                    }
+                });
 
-                if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
-                } else {
-                    // SCAN button
-                    builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            Intent goToScanner = new Intent(getContext(), ScannerActivity.class);
-                            startActivity(goToScanner);
-                        }
-                    });
+                // PASTE button
+                builder.setPositiveButton(getString(R.string.paste), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        requestPastePaymentAddress();
+                    }
+                });
 
-                    // PASTE button
-                    builder.setPositiveButton(getString(R.string.paste), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            requestPastePaymentAddress();
-                        }
-                    });
-
-                    builder.show();
-                }
+                builder.show();
 
             }
             return super.onPreferenceTreeClick(preference);
@@ -183,7 +182,7 @@ public class SettingsActivity extends AppCompatActivity {
                     String address = input.getText().toString();
                     boolean isAddressValid = BitcoinUtils.validateAddress(address);
                     if(isAddressValid) {
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        SharedPreferences.Editor editor = mSharedPreferences.edit();
                         editor.putString(getString(R.string.payment_address_key), input.getText().toString());
                         editor.commit();
                         findPreference(getString(R.string.payment_address_key)).setSummary(input.getText().toString());
@@ -205,41 +204,53 @@ public class SettingsActivity extends AppCompatActivity {
 
 
 
+
+
+        // Capture the scanner results
         @Override
-        public void onRequestPermissionsResult(int requestCode,
-                                               String permissions[], int[] grantResults) {
-            switch (requestCode) {
-                case REQUEST_PERMISSION_CAMERA: {
-                    // If request is cancelled, the result arrays are empty.
-                    if (grantResults.length > 0
-                            && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        // permission was granted
-                        Intent goToScanning = new Intent(getContext(), ScannerActivity.class);
-                        startActivity(goToScanning);
-                        getActivity().finish();
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+            if(result != null) {
+                boolean isAddressValid = false;
+
+                if(result.getContents() != null) {
+                    // get detected value and validate
+                    String addressString = result.getContents();
+                    String address;
+                    Log.d("SCANNER ADDRESS", addressString);
+
+                    // if BIP 21 is used get the address
+                    if(BitcoinUtils.isAddressUsingBIP21(addressString)) {
+                        address = BitcoinUtils.getAddressFromBip21String(addressString);
                     } else {
-                        // permission denied (whether never ask is checked or not
-                        requestPastePaymentAddress();
+                        address = addressString;
                     }
-                    return;
+
+                    isAddressValid = BitcoinUtils.validateAddress(address);
+                    if(isAddressValid) {
+                        // set appropriate setting/preference
+                        SharedPreferences.Editor editor = mSharedPreferences.edit();
+                        editor.putString(getString(R.string.payment_address_key), address);
+                        editor.commit();
+                    }
                 }
 
+                // go to settings activity
+                Intent goToSettings = new Intent(getContext(), SettingsActivity.class);
+                goToSettings.putExtra(BitcoinUtils.showAddressInvalidMessage, !isAddressValid);
+                goToSettings.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(goToSettings);
+
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
             }
         }
 
+
+
+
     }
 
-
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-
-
-        // call fragment's onRequestPermissionsResult !!
-        getSupportFragmentManager().findFragmentById(R.id.content_frame).onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
 
 
 

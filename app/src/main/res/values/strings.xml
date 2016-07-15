@@ -20,6 +20,7 @@
     <string name="local_currency_key">LocalCurrencyKey</string>
 
     <string name="scan_qr_code">Scan QR Code</string>
+    <string name="scan_qr_code_prompt">Scan a Bitcoin address QR code</string>
 
     <string name="invalid_bitcoin_address_message">This was not a valid Bitcoin address</string>
     <string name="add_payment_address_title">Add payment address</string>

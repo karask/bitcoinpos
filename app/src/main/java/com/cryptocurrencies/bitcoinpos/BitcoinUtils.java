@@ -24,7 +24,7 @@ public class BitcoinUtils {
 
     // easy way to change between testnet and mainnet
     public static boolean isMainNet() {
-        return false;
+        return true;
     }
 
     public static boolean isAddressUsingBIP21(String addressString) {
