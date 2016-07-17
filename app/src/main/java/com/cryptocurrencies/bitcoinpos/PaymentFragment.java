@@ -147,7 +147,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 // checks network connection and then displays message with retry
                 if(!Utilities.isNetworkConnectionAvailable(getContext())) {
                     Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
-                            .setAction("Retry", new View.OnClickListener() {
+                            .setAction(R.string.retry, new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                     ExchangeRates exchangeRates = ExchangeRates.getInstance();
@@ -156,6 +156,9 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
                             });
                     mesg.show();
+                } else {
+                    // attempt to get exchange rates again
+                    exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
                 }
             }
         } else if(v instanceof ImageButton) {
@@ -206,6 +209,10 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     break;
 
                 case R.id.request_payment:
+                    // update exchange rates for this or next payment request
+                    ExchangeRates exchangeRates = ExchangeRates.getInstance();
+                    exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+
                     if (mBitcoinPaymentAddress.isEmpty() || !BitcoinUtils.validateAddress(mBitcoinPaymentAddress)) {
                         Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_bitcoin_address_message, Snackbar.LENGTH_INDEFINITE)
                                 .setAction("Settings", new View.OnClickListener() {
@@ -220,24 +227,45 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     } else if(amount.getText().toString().equals("0")) {
                         Toast.makeText(getContext(), R.string.amount_cannot_be_zero, Toast.LENGTH_SHORT).show();
                     } else if(checkIfNetworkConnectionAvailable()) {
-                        String primaryAmount, secondaryAmount;
-                        boolean isPrimaryAmount;
-                        if (currencyToggle.isChecked()) {
-                            // was local currency - convert to BTC
-                            primaryAmount = amount.getText().toString(); //+ " " + mLocalCurrency;
-                            secondaryAmount = getBtcFromLocalCurrency(amount.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
-                            isPrimaryAmount = false;
+
+                        if(exchangeRates.getLastUpdated() != null) {
+
+                            String primaryAmount, secondaryAmount;
+                            boolean isPrimaryAmount;
+                            if (currencyToggle.isChecked()) {
+                                // was local currency - convert to BTC
+                                primaryAmount = amount.getText().toString(); //+ " " + mLocalCurrency;
+                                secondaryAmount = getBtcFromLocalCurrency(amount.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
+                                isPrimaryAmount = false;
+                            } else {
+                                // was BTC - convert to local currency
+                                primaryAmount = amount.getText().toString(); // + " BTC";
+                                secondaryAmount = getLocalCurrencyFromBtc(amount.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+                                isPrimaryAmount = true;
+                            }
+
+                            DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount, secondaryAmount, isPrimaryAmount, mLocalCurrency);
+                            // for API >= 23 the title is disable by default -- we set a style that enables it
+                            myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
+                            myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));
                         } else {
-                            // was BTC - convert to local currency
-                            primaryAmount = amount.getText().toString(); // + " BTC";
-                            secondaryAmount = getLocalCurrencyFromBtc(amount.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
-                            isPrimaryAmount = true;
+                            // exchange rate is not available
+                            Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
+                                    .setAction(R.string.retry, new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            ExchangeRates exchangeRates = ExchangeRates.getInstance();
+                                            exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+
+                                            // programmatically click request_payment again
+                                            requestPayment.callOnClick();
+                                        }
+
+                                    });
+                            mesg.show();
                         }
 
-                        DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount, secondaryAmount, isPrimaryAmount, mLocalCurrency);
-                        // for API >= 23 the title is disable by default -- we set a style that enables it
-                        myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
-                        myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));
+
                         break;
                     }
 

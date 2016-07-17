@@ -66,10 +66,13 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         mSwipeLayout = (SwipeRefreshLayout) fragmentView.findViewById(R.id.history_swipe_container);
         mSwipeLayout.setOnRefreshListener(this);
         mSwipeLayout.setColorSchemeResources(
-                android.R.color.holo_blue_bright,
-                android.R.color.holo_green_light,
-                android.R.color.holo_orange_light,
-                android.R.color.holo_red_light);
+                R.color.colorPrimary,
+                R.color.colorAccent,
+                R.color.colorPrimaryDark);
+//                android.R.color.holo_blue_bright,
+//                android.R.color.holo_green_light,
+//                android.R.color.holo_orange_light,
+//                android.R.color.holo_red_light);
 
         return fragmentView;
     }
@@ -87,7 +90,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 //                updateTransactionHistoryView();
                 mSwipeLayout.setRefreshing(false);
             }
-        }, 3000);
+        }, 1000);
     }
 
 
