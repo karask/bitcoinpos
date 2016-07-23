@@ -126,7 +126,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
     public void onClick(View v) {
         if(v instanceof ToggleButton) {
             // only one toggle button: currency converter
-            ToggleButton  currencyToggle = (ToggleButton) v;
+            final ToggleButton  currencyToggle = (ToggleButton) v;
             String currentAmount = amount.getText().toString();
             ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
@@ -150,8 +150,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                             .setAction(R.string.retry, new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    ExchangeRates exchangeRates = ExchangeRates.getInstance();
-                                    exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+                                    Toast.makeText(getContext(), "Updating exchange rates...", Toast.LENGTH_LONG).show();
+                                    currencyToggle.performClick();
                                 }
 
                             });
@@ -226,7 +226,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                         mesg.show();
                     } else if(amount.getText().toString().equals("0")) {
                         Toast.makeText(getContext(), R.string.amount_cannot_be_zero, Toast.LENGTH_SHORT).show();
-                    } else if(checkIfNetworkConnectionAvailable()) {
+                    } else if(checkIfNetworkConnectionAvailable()) {   // check also displays toast with issue  TODO clean with else clause and simpler check
 
                         if(exchangeRates.getLastUpdated() != null) {
 
@@ -254,11 +254,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                                     .setAction(R.string.retry, new View.OnClickListener() {
                                         @Override
                                         public void onClick(View v) {
-                                            ExchangeRates exchangeRates = ExchangeRates.getInstance();
-                                            exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
-
                                             // programmatically click request_payment again
-                                            requestPayment.callOnClick();
+                                            requestPayment.performClick();
                                         }
 
                                     });
