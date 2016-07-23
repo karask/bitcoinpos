@@ -54,6 +54,7 @@
     <string name="amount_cannot_be_zero">Amount cannot be zero</string>
     <string name="ok">OK</string>
     <string name="retry">Retry</string>
+    <string name="updating_exchange_rates">Updating exchange rates...</string>
 
 
 </resources>

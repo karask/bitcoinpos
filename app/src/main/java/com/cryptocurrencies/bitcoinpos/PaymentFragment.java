@@ -150,7 +150,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                             .setAction(R.string.retry, new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    Toast.makeText(getContext(), "Updating exchange rates...", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(getContext(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
                                     currencyToggle.performClick();
                                 }
 
