@@ -51,12 +51,14 @@
         <item>@string/default_currency_code</item>
         <item>USD</item>
         <item>GBP</item>
+        <item>JPY</item>
     </string-array>
 
     <string-array name="currency_names">
         <item>Eurozone Euro</item>
         <item>US Dollar</item>
         <item>Pound Sterling</item>
+        <item>Japanese Yen</item>
     </string-array>
 
     <string name="default_currency_code">EUR</string>

@@ -14,8 +14,10 @@
 * Requires client's wallet to support BIP 21 URI scheme
 
 ## Known Issues
-* validate address is not working for (???) HD address (different checksum method?)
+
 
 ## TODO    
-* Test with multisig account!!
+* Test with multisig accounts
 * Test with HD addresses
+* Clean code 
+* Make transaction history dates more user friendly (e.g. a few seconds ago, an hour ago, etc.)
