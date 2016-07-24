@@ -1,6 +1,13 @@
 <resources>
     <!-- toolbar -->
     <string name="app_name">Bitcoin PoS</string>
+    <string name="version">v1.0</string>
+    <string name="copyright">\u00A9 2016</string>
+    <string name="konstantinos_karasavvas">Konstantinos Karasavvas</string>
+
+    <string name="app_name_version">%1$s  %2$s</string>
+    <string name="copyright_author">%1$s %2$s</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
 
@@ -31,7 +38,9 @@
     <string name="amount_has_more_decimals_than_allowed">You have reached the limit of the decimals allowed for the currency !</string>
     <string name="specify_valid_bitcoin_address_message">Please specify a valid Bitcoin address to receive payments</string>
     <string name="network_connection_not_available_message">Network connection is not available</string>
+
     <string name="request_payment_fragment_tag">request_payment_fragment_tag</string>
+    <string name="about_fragment_tag">about_fragment_tag</string>
 
     <string name="payment_text">Payment:</string>
     <string name="payment_pending">Pending</string>

@@ -25,8 +25,17 @@
 
     </style>
 
+    <style name="AboutTextViewStyle" parent="Base.Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
     <!-- Dialog Fragment (Request Payment) -->
     <style name="RequestPaymentDialogFragment" parent="@style/Theme.AppCompat.Light.Dialog">
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <!-- Dialog Fragment (About) -->
+    <style name="AboutFragment" parent="@style/Theme.AppCompat.Light.Dialog">
         <item name="android:windowNoTitle">true</item>
     </style>
 

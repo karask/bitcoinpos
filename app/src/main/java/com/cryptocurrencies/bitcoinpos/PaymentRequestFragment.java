@@ -448,7 +448,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                                         mTimer.cancel();
 
                                     // if found transaction was confirmed
-                                    mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.bright_green));
+                                    mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.brightGreen));
                                     mPaymentStatusTextView.setText(R.string.payment_confirmed);
 
                                     // transaction was confirmed / update transaction history

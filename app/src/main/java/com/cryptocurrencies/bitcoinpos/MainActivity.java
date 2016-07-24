@@ -2,6 +2,7 @@ package com.cryptocurrencies.bitcoinpos;
 
 import android.content.Intent;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -10,7 +11,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends AppCompatActivity implements PaymentRequestFragment.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements PaymentRequestFragment.OnFragmentInteractionListener,
+                                                               AboutFragment.OnFragmentInteractionListener {
 
     private Toolbar mToolbar;
     private TabLayout mTabLayout;
@@ -127,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_about) {
+            showAbout();
             return true;
         } else if(id == R.id.action_settings) {
             showSettings();
@@ -139,10 +142,15 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     private void showSettings() {
         Intent goToSettings = new Intent(getApplicationContext(), SettingsActivity.class);
         startActivity(goToSettings);
-
     }
 
 
+    private void showAbout() {
+        DialogFragment myDialog = AboutFragment.newInstance();
+        // for API >= 23 the title is disable by default -- we set a style that enables it
+        myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.AboutFragment);
+        myDialog.show(getSupportFragmentManager(), getString(R.string.about_fragment_tag));
+    }
 
 
     // implements PaymentRequestFragment inner interface methods
@@ -152,4 +160,9 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     }
 
 
+    @Override
+    public void onAboutOk() {
+        // close dialog fragment
+        getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentByTag(getString(R.string.about_fragment_tag))).commit();
+    }
 }
