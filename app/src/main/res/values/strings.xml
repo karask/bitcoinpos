@@ -48,17 +48,105 @@
     <string name="payment_confirmed">Confirmed</string>
 
     <string-array name="currency_codes">
-        <item>@string/default_currency_code</item>
-        <item>USD</item>
+        <item>DZD</item>
+        <item>ARS</item>
+        <item>AUD</item>
+        <item>BDT</item>
+        <item>BRL</item>
         <item>GBP</item>
+        <item>CAD</item>
+        <item>XAF</item>
+        <item>CLP</item>
+        <item>CNY</item>
+        <item>COP</item>
+        <item>CZK</item>
+        <item>EGP</item>
+        <item>AED</item>
+        <item>@string/default_currency_code</item>
+        <item>GHS</item>
+        <item>HUF</item>
+        <item>INR</item>
+        <item>IDR</item>
+        <item>IRR</item>
+        <item>ILS</item>
         <item>JPY</item>
+        <item>KZT</item>
+        <item>KES</item>
+        <item>MYR</item>
+        <item>MXN</item>
+        <item>MAD</item>
+        <item>NZD</item>
+        <item>NGN</item>
+        <item>PKR</item>
+        <item>PEN</item>
+        <item>PHP</item>
+        <item>RON</item>
+        <item>RUB</item>
+        <item>SAR</item>
+        <item>ZAR</item>
+        <item>KRW</item>
+        <item>SDG</item>
+        <item>SEK</item>
+        <item>CHF</item>
+        <item>THB</item>
+        <item>TRY</item>
+        <item>UGX</item>
+        <item>UAH</item>
+        <item>USD</item>
+        <item>UZS</item>
+        <item>VEF</item>
+        <item>VND</item>
     </string-array>
 
     <string-array name="currency_names">
+        <item>Algerian Dinar</item>
+        <item>Argentine Peso</item>
+        <item>Australian Dollar</item>
+        <item>Bangladeshi Taka</item>
+        <item>Brazilian Real</item>
+        <item>British Pound</item>
+        <item>Canadian Dollar</item>
+        <item>Central African Franc</item>
+        <item>Chilean Peso</item>
+        <item>Chinese Yuan</item>
+        <item>Colombian Peso</item>
+        <item>Czech Koruna</item>
+        <item>Egyptian Pound</item>
+        <item>Emirati Dirham</item>
         <item>Eurozone Euro</item>
-        <item>US Dollar</item>
-        <item>Pound Sterling</item>
+        <item>Ghanaian Cedi</item>
+        <item>Hungarian Forint</item>
+        <item>Indian Rupee</item>
+        <item>Indonesian Rupiah</item>
+        <item>Iranian Rial</item>
+        <item>Israeli Shekel</item>
         <item>Japanese Yen</item>
+        <item>Kazakhstani Tenge</item>
+        <item>Kenyan Shilling</item>
+        <item>Malaysian Ringgit</item>
+        <item>Mexican Peso</item>
+        <item>Moroccan Dirham</item>
+        <item>New Zealand Dollar</item>
+        <item>Nigerian Naira</item>
+        <item>Pakistani Rupee</item>
+        <item>Peruvian Sol</item>
+        <item>Philippine Peso</item>
+        <item>Romanian New Leu</item>
+        <item>Russian Ruble</item>
+        <item>Saudi Arabian Riyal</item>
+        <item>South African Rand</item>
+        <item>South Korean Won</item>
+        <item>Sudanese Pound</item>
+        <item>Swedish Krona</item>
+        <item>Swiss Franc</item>
+        <item>Thai Baht</item>
+        <item>Turkish Lira</item>
+        <item>Ugandan Shilling</item>
+        <item>Ukrainian Hryvnia</item>
+        <item>US Dollar</item>
+        <item>Uzbekistani Som</item>
+        <item>Venezuelan Bolivar</item>
+        <item>Vietnamese Dong</item>
     </string-array>
 
     <string name="default_currency_code">EUR</string>

@@ -75,7 +75,6 @@ public class SettingsActivity extends AppCompatActivity {
     public static class SettingsFragment extends PreferenceFragmentCompat  implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         SharedPreferences mSharedPreferences;
-        private final int REQUEST_PERMISSION_CAMERA=1;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {

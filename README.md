@@ -1,5 +1,10 @@
 
 # Introduction
+This is a simple Bitconi Point of Sale application for android devices. It can easily be customized to support specific merchant items.
+
+It currently supports the following currencies: EUR USD, GBD, CNY, INR, JPY, RUB, ARS, AUD, BDT, BRL, CAD, XAF, DZD, CLP, COP, CZK, EGP, AED, GHS, HUF, IDR, IRR, ILS, KZT, KES, MYR, MXN, MAD, NZD, NGN, PKR, PEN, PHP, RON, SAR, ZAR, KRW, SDG, SEK, CHF, THB, TRY, UGX, UAH, UZS, VEF and VND.
+
+If you are using another currency please contact me and I will add the currency required.
 
 
 ## Features
@@ -21,3 +26,5 @@
 * Test with HD addresses
 * Clean code 
 * Make transaction history dates more user friendly (e.g. a few seconds ago, an hour ago, etc.)
+* Add NFC support
+* Add specific items support
