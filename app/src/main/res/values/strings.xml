@@ -44,7 +44,7 @@
 
     <string name="payment_text">Payment:</string>
     <string name="payment_pending">Pending</string>
-    <string name="payment_unconfirmed">Unconfirmed</string>
+    <string name="payment_unconfirmed">Initiated</string>
     <string name="payment_confirmed">Confirmed</string>
 
     <string-array name="currency_codes">
