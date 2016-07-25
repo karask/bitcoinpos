@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos;
+package gr.cryptocurrencies.bitcoinpos;
 
 import android.content.Intent;
 import android.support.design.widget.TabLayout;

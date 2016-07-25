@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos.database;
+package gr.cryptocurrencies.bitcoinpos.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

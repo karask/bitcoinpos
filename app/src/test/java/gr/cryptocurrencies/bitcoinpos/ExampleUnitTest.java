@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos;
+package gr.cryptocurrencies.bitcoinpos;
 
 import org.junit.Test;
 

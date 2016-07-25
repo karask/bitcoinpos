@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos;
+package gr.cryptocurrencies.bitcoinpos;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

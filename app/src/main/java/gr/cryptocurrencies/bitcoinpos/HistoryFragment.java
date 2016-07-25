@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos;
+package gr.cryptocurrencies.bitcoinpos;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -17,8 +17,8 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.cryptocurrencies.bitcoinpos.database.TransactionHistoryDb;
-import com.cryptocurrencies.bitcoinpos.network.Requests;
+import gr.cryptocurrencies.bitcoinpos.database.TransactionHistoryDb;
+import gr.cryptocurrencies.bitcoinpos.network.Requests;
 
 import org.json.JSONException;
 import org.json.JSONObject;

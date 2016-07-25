@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos;
+package gr.cryptocurrencies.bitcoinpos;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

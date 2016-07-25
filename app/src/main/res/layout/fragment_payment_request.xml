@@ -6,7 +6,7 @@
     android:background="@android:color/white"
 
     android:tag="@string/request_payment_fragment_tag"
-    tools:context=".PaymentRequestFragment">
+    tools:context="gr.cryptocurrencies.bitcoinpos.PaymentRequestFragment">
 
     <TextView
         android:layout_width="match_parent"

@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos;
+package gr.cryptocurrencies.bitcoinpos;
 
 
 import android.content.Intent;
@@ -18,8 +18,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.cryptocurrencies.bitcoinpos.network.ExchangeRates;
-import com.cryptocurrencies.bitcoinpos.network.Utilities;
+import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
+import gr.cryptocurrencies.bitcoinpos.network.Utilities;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;

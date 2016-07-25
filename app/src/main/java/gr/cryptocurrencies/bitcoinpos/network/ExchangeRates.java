@@ -1,4 +1,4 @@
-package com.cryptocurrencies.bitcoinpos.network;
+package gr.cryptocurrencies.bitcoinpos.network;
 
 import android.content.Context;
 import android.util.Log;
