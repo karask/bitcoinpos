@@ -28,3 +28,4 @@ If you are using another currency please contact me and I will add the currency 
 * Make transaction history dates more user friendly (e.g. a few seconds ago, an hour ago, etc.)
 * Add NFC support
 * Add specific items support
+* version number exists in both gradle file and strings.xml - use PackageManager getPackageInfo to get the version programmatically...
