@@ -1,6 +1,8 @@
 package com.cryptocurrencies.bitcoinpos;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
@@ -36,7 +38,25 @@ public class ScanQrCodeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        capture.onResume();
+
+        // If API 23 permissions will be asked and onResume it will ask to allow/deny
+        // After choice onResume is run again, however scanner get stuck if run immediately.
+        // Thus for API 23+ we run onResume() with a small delay to bypass this glitch with
+        // a small tradeoff in efficiency
+        // For API <23 permissions are checked on installation thus no dialog/no getting stuck
+        // TODO Revisit for cleaner solution
+        if(Build.VERSION.SDK_INT >= 23) {
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    capture.onResume();
+                }
+            }, 10);
+        } else {
+            capture.onResume();
+        }
+
     }
 
     @Override
