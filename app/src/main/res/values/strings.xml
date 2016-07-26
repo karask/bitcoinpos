@@ -154,6 +154,7 @@
     <string name="ok">OK</string>
     <string name="retry">Retry</string>
     <string name="updating_exchange_rates">Updating exchange rates...</string>
+    <string name="no_transaction_yet">No transactions made yet.</string>
 
 
 </resources>

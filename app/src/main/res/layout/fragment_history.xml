@@ -9,5 +9,10 @@
         android:layout_height="match_parent"
         android:id="@android:id/list" />
 
+    <TextView
+        android:id="@android:id/empty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/no_transaction_yet" />
 
 </android.support.v4.widget.SwipeRefreshLayout>

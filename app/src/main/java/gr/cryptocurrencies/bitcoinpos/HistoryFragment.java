@@ -69,10 +69,6 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 R.color.colorPrimary,
                 R.color.colorAccent,
                 R.color.colorPrimaryDark);
-//                android.R.color.holo_blue_bright,
-//                android.R.color.holo_green_light,
-//                android.R.color.holo_orange_light,
-//                android.R.color.holo_red_light);
 
         return fragmentView;
     }
@@ -90,7 +86,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 //                updateTransactionHistoryView();
                 mSwipeLayout.setRefreshing(false);
             }
-        }, 1000);
+        }, 2000);
     }
 
 
@@ -136,7 +132,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
         mTransactionHistoryItemList = new ArrayList<HashMap<String,String>>();
 
-        if(c.moveToFirst()) {
+        if (c.moveToFirst()) {
 
             DateFormat dbDf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'");
             dbDf.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -183,7 +179,6 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
         setListAdapter(adapter);
     }
-
 
 
     // TODO USED from both here and HistoryFragment ... move to another class that represents Blockr API !!!
