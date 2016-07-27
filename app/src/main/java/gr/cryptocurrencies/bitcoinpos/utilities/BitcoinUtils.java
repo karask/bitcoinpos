@@ -1,4 +1,4 @@
-package gr.cryptocurrencies.bitcoinpos;
+package gr.cryptocurrencies.bitcoinpos.utilities;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +22,7 @@ public class BitcoinUtils {
     private BitcoinUtils() {
     }
 
-    // easy way to change between testnet and mainnet
+    // easy way to change between testnet and mainnet for development only
     public static boolean isMainNet() {
         return true;
     }

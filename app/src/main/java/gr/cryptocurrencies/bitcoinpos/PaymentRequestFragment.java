@@ -26,6 +26,8 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import gr.cryptocurrencies.bitcoinpos.database.TransactionHistoryDb;
 import gr.cryptocurrencies.bitcoinpos.network.Requests;
+import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
+
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
@@ -399,7 +401,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                                             }
 
                                             addTransaction(mPaymentTransaction, btcAmount, localAmount, mLocalCurrency,
-                                                    createdAt, null, mMerchantName, mBitcoinAddress, false);
+                                                    createdAt, null, mMerchantName, mBitcoinAddress, false, null);
                                         }
                                     }
                                 }
@@ -478,7 +480,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                                 double localAmount, String localCurrency,
                                 String createdAt, String confirmedAt,
                                 String merchantName, String bitcoinAddress,
-                                boolean isConfirmed) {
+                                boolean isConfirmed, String productName) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         // make sure transaction entry does not already exist:
@@ -499,6 +501,7 @@ public class PaymentRequestFragment extends DialogFragment  {
             values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
             values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
             values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_PRODUCT_NAME, productName);
 
             db.insert(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, null, values);
         }

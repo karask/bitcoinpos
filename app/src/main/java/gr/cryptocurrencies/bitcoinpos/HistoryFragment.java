@@ -19,19 +19,15 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import gr.cryptocurrencies.bitcoinpos.database.TransactionHistoryDb;
 import gr.cryptocurrencies.bitcoinpos.network.Requests;
+import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
+import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TimeZone;
 
 
 /**
@@ -54,9 +50,9 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
     @Override
     public void onResume() {
+        super.onResume();
         updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
         updateTransactionHistoryView();
-        super.onResume();
     }
 
     @Override
@@ -119,7 +115,8 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED };
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT };
 
         String sortOrder = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
         Cursor c = db.query(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, tableColumns, null, null, null, null, sortOrder);
@@ -134,22 +131,12 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
         if (c.moveToFirst()) {
 
-            DateFormat dbDf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'");
-            dbDf.setTimeZone(TimeZone.getTimeZone("UTC"));
-            DateFormat uiDf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
-            uiDf.setTimeZone(Calendar.getInstance().getTimeZone());
             do {
                 HashMap<String, String> item = new HashMap<String, String>();
                 //item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID, c.getString(0));
                 item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, c.getString(1) + " " + c.getString(2));
-
-                Date date = null;
-                try {
-                    date = dbDf.parse(c.getString(3));
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT, date != null ? uiDf.format(date) : " -- ");
+                item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, c.getString(5) + " BTC");
+                item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT, DateUtilities.getRelativeTimeString(c.getString(3)));
 
                 int isConfirmedImage = "1".equals(c.getString(4)) ? R.drawable.ic_tick_green_24dp : R.drawable.ic_warning_orange_24dp;
                 item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, Integer.toString(isConfirmedImage));
@@ -166,12 +153,13 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         // define key strings in hashmap
         String[] from = {
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED
         };
 
         // define ids of view in list view fragment to bind to
-        int[] to = { R.id.transaction_history_amount, R.id.transaction_history_date, R.id.transaction_history_is_confirmed };
+        int[] to = { R.id.transaction_history_amount, R.id.transaction_history_btc_amount, R.id.transaction_history_date, R.id.transaction_history_is_confirmed };
 
         // Instantiating an adapter to store each items
         // R.layout.fragment_history defines the layout of each item
@@ -251,7 +239,9 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     // implementng FragmentIsNotVisible, our interface so that view pager can act when one of its fragments becomes visible
     @Override
     public void doWhenFragmentBecomesVisible() {
-        updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
+        Cursor c = getTransactionHistoryDbCursor();
+        updateConfirmedStatusTx(c);
+        updateTransactionHistoryFromCursor(c);
         updateTransactionHistoryView();
     }
 

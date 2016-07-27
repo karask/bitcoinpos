@@ -22,6 +22,8 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
+
 public class SettingsActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;

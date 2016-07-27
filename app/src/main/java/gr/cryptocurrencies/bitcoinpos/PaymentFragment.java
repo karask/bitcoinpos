@@ -20,6 +20,7 @@ import android.widget.ToggleButton;
 
 import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
 import gr.cryptocurrencies.bitcoinpos.network.Utilities;
+import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
