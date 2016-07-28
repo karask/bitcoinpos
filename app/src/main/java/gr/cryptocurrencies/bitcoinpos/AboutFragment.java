@@ -1,6 +1,7 @@
 package gr.cryptocurrencies.bitcoinpos;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.net.Uri;
@@ -85,8 +86,16 @@ public class AboutFragment extends DialogFragment {
 
         Resources res = getResources();
 
+        // get version number from package info
+        String versionNumber = "";
+        try {
+            versionNumber = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
         mAppNameVersionTextView = (TextView) fragmentView.findViewById(R.id.appname_version_textview);
-        mAppNameVersionTextView.setText(String.format(res.getString(R.string.app_name_version), res.getString(R.string.app_name), res.getString(R.string.version)));
+        mAppNameVersionTextView.setText(String.format(res.getString(R.string.app_name_version), res.getString(R.string.app_name), versionNumber));
 
         mCopyrightAuthorNameTextView = (TextView) fragmentView.findViewById(R.id.copyright_author_textview);
         mCopyrightAuthorNameTextView.setText(String.format(res.getString(R.string.copyright_author), res.getString(R.string.copyright), res.getString(R.string.konstantinos_karasavvas)));

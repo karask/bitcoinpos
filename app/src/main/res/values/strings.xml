@@ -1,11 +1,10 @@
 <resources>
     <!-- toolbar -->
     <string name="app_name">Bitcoin PoS</string>
-    <string name="version">v1.0</string>
     <string name="copyright">\u00A9 2016</string>
     <string name="konstantinos_karasavvas">Konstantinos Karasavvas</string>
 
-    <string name="app_name_version">%1$s  %2$s</string>
+    <string name="app_name_version">%1$s  v%2$s</string>
     <string name="copyright_author">%1$s %2$s</string>
 
     <string name="action_settings">Settings</string>
