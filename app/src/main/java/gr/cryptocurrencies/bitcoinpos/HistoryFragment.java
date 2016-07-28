@@ -103,9 +103,8 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
 
     private Cursor getTransactionHistoryDbCursor() {
-        // instantiate DB
-        if(mDbHelper == null)
-            mDbHelper = new TransactionHistoryDb(getContext());
+        // get DB helper
+        mDbHelper = TransactionHistoryDb.getInstance(getContext());
 
         // Each row in the list stores amount and date of transaction -- retrieves history from DB
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -161,11 +160,14 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         // define ids of view in list view fragment to bind to
         int[] to = { R.id.transaction_history_amount, R.id.transaction_history_btc_amount, R.id.transaction_history_date, R.id.transaction_history_is_confirmed };
 
-        // Instantiating an adapter to store each items
-        // R.layout.fragment_history defines the layout of each item
-        SimpleAdapter adapter = new SimpleAdapter(getActivity().getBaseContext(), mTransactionHistoryItemList, R.layout.transaction_history_item , from, to);
+        // checking that activity is not null before proceeding since sometime through the lifecycle of the fragment
+        // the getActivity() returns null!
+        if(getActivity() != null) {
+            // Instantiating an adapter to store each items -- R.layout.fragment_history defines the layout of each item
+            SimpleAdapter adapter = new SimpleAdapter(getActivity(), mTransactionHistoryItemList, R.layout.transaction_history_item, from, to);
+            setListAdapter(adapter);
+        }
 
-        setListAdapter(adapter);
     }
 
 

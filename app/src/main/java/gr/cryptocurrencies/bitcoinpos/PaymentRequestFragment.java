@@ -213,9 +213,8 @@ public class PaymentRequestFragment extends DialogFragment  {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
 
-        // instantiate DB
-        if(mDbHelper == null)
-            mDbHelper = new TransactionHistoryDb(getContext());
+        // get DB helper
+        mDbHelper = TransactionHistoryDb.getInstance(getContext());
 
         // setup timer to check network for unconfirmed/confirmed transactions
         mTimer = new Timer();

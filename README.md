@@ -19,14 +19,11 @@ If you are using another currency please contact me and I will add the currency 
 * Requires client's wallet to support BIP 21 URI scheme
 
 ## Known Issues
-* When changing language in your android device while the app is running it crashes when returning to the history page
-  - works fine after restarting (mContext inside SqliteOpenHelper?? is null)
+
 
 ## TODO    
 * Test with multisig accounts
 * Test with HD addresses
 * Clean code 
-* Make transaction history dates more user friendly (e.g. a few seconds ago, an hour ago, etc.)
 * Add NFC support
 * Add specific items support
-* version number exists in both gradle file and strings.xml - use PackageManager getPackageInfo to get the version programmatically...
