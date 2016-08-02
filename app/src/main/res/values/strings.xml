@@ -1,11 +1,11 @@
 <resources>
     <!-- toolbar -->
     <string name="app_name">Bitcoin PoS</string>
-    <string name="copyright">\u00A9 2016</string>
+    <string name="copyright" translatable="false">\u00A9 2016</string>
     <string name="konstantinos_karasavvas">Konstantinos Karasavvas</string>
 
-    <string name="app_name_version">%1$s  v%2$s</string>
-    <string name="copyright_author">%1$s %2$s</string>
+    <string name="app_name_version" translatable="false">%1$s  v%2$s</string>
+    <string name="copyright_author" translatable="false">%1$s %2$s</string>
 
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
@@ -21,9 +21,9 @@
     <string name="scan">Scan</string>
     <string name="paste">Paste</string>
 
-    <string name="merchant_name_key">MerchantNameKey</string>
-    <string name="payment_address_key">PaymentAddressKey</string>
-    <string name="local_currency_key">LocalCurrencyKey</string>
+    <string name="merchant_name_key" translatable="false">MerchantNameKey</string>
+    <string name="payment_address_key" translatable="false">PaymentAddressKey</string>
+    <string name="local_currency_key" translatable="false">LocalCurrencyKey</string>
 
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="scan_qr_code_prompt">Scan a Bitcoin address QR code</string>
@@ -38,12 +38,12 @@
     <string name="specify_valid_bitcoin_address_message">Please specify a valid Bitcoin address to receive payments</string>
     <string name="network_connection_not_available_message">Network connection is not available</string>
 
-    <string name="request_payment_fragment_tag">request_payment_fragment_tag</string>
-    <string name="about_fragment_tag">about_fragment_tag</string>
+    <string name="request_payment_fragment_tag" translatable="false">request_payment_fragment_tag</string>
+    <string name="about_fragment_tag" translatable="false">about_fragment_tag</string>
 
     <string name="payment_text">Payment:</string>
     <string name="payment_pending">Pending</string>
-    <string name="payment_unconfirmed">Initiated</string>
+    <string name="payment_unconfirmed">Ongoing</string>
     <string name="payment_confirmed">Confirmed</string>
 
     <string-array name="currency_codes">
@@ -118,7 +118,7 @@
         <item>Indian Rupee</item>
         <item>Indonesian Rupiah</item>
         <item>Iranian Rial</item>
-        <item>Israeli Shekel</item>
+        <item>Israeli New Shekel</item>
         <item>Japanese Yen</item>
         <item>Kazakhstani Tenge</item>
         <item>Kenyan Shilling</item>
@@ -154,6 +154,7 @@
     <string name="retry">Retry</string>
     <string name="updating_exchange_rates">Updating exchange rates...</string>
     <string name="no_transaction_yet">No transactions made yet.</string>
+    <string name="cancel">Cancel</string>
 
 
 </resources>

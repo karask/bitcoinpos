@@ -196,6 +196,7 @@ public class PaymentRequestFragment extends DialogFragment  {
         mSecondaryAmountTextView.setText(secondaryAmountToDisplay);
 
         mCancelButton = (Button) fragmentView.findViewById(R.id.cancel_payment_button);
+        mCancelButton.setText(getString(R.string.cancel));
         mCancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

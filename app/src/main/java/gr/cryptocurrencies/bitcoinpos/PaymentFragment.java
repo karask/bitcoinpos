@@ -216,7 +216,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
                     if (mBitcoinPaymentAddress.isEmpty() || !BitcoinUtils.validateAddress(mBitcoinPaymentAddress)) {
                         Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_bitcoin_address_message, Snackbar.LENGTH_INDEFINITE)
-                                .setAction("Settings", new View.OnClickListener() {
+                                .setAction(getString(R.string.action_settings), new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
                                 Intent goToSettings = new Intent(getContext(), SettingsActivity.class);
