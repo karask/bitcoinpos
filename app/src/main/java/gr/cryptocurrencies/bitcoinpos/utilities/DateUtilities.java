@@ -44,7 +44,8 @@ public class DateUtilities {
         if(currentTimeInMillis - dbTimeInMillis < 23*60*60 * 1000) {
             // only get friendly relative string if we have a translation for that language
             // Currently only Locale.ENGLISH
-            if(Locale.getDefault().getLanguage().equals( Locale.ENGLISH.toString() )) {
+            if(Locale.getDefault().getLanguage().equals( Locale.ENGLISH.toString() ) ||
+                    Locale.getDefault().getLanguage().equals( "el" )) {
                 relativeTimeString = DateUtils.getRelativeTimeSpanString(dbTimeInMillis, currentTimeInMillis, DateUtils.MINUTE_IN_MILLIS).toString();
             } else {
                 relativeTimeString = dbDate != null ? uiDf.format(dbDate) : " -- ";
