@@ -10,7 +10,7 @@ If you are using another currency please contact me and I will add the currency 
 
 
 ## Features
-* Supports API version >= 15
+* Supports API version >= 16
 * Supports BIP 21 URI scheme
 * Uses Yahoo Finance API for conversion rates between currencies
 * Uses Blockr API for now (could be easily extended to support other APIs, directly the Bitcoin network or both)
