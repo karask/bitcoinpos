@@ -152,9 +152,17 @@
     <string name="amount_cannot_be_zero">Amount cannot be zero</string>
     <string name="ok">OK</string>
     <string name="retry">Retry</string>
-    <string name="updating_exchange_rates">Updating exchange rates...</string>
+    <string name="updating_exchange_rates">Slow connection. Updating exchange rates...</string>
     <string name="no_transaction_yet">No transactions made yet.</string>
     <string name="cancel">Cancel</string>
-
+    <string name="transactions_report">Report</string>
+    <string name="select_time_period">Select time period for the transaction report</string>
+    <string name="from">From:</string>
+    <string name="to">To:</string>
+    <string name="date_range_not_valid">Date range is not valid</string>
+    <string name="no_access_to_download_folder">Access denied to write file to Download folder.</string>
+    <string name="access_external_storage_required_message">Access to external storage is required to write the CSV file in the Downloads folder.</string>
+    <string name="no_transactions_in_date_range">No transactions found in selected date range</string>
+    <string name="csv_file_saved">CSV file saved in Downloads folder</string>
 
 </resources>

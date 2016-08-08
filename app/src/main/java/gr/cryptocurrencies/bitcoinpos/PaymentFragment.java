@@ -10,6 +10,9 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v7.preference.PreferenceManager;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -53,7 +56,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -124,6 +127,12 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_main, menu);
+    }
+
+
+    @Override
     public void onClick(View v) {
         if(v instanceof ToggleButton) {
             // only one toggle button: currency converter
@@ -160,6 +169,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 } else {
                     // attempt to get exchange rates again
                     exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+                    Toast.makeText(getContext(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
                 }
             }
         } else if(v instanceof ImageButton) {
@@ -315,7 +325,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
         double newAmount = Double.parseDouble(amount) * exchangeRates.getBtcToLocalRate();
         DecimalFormat formatter = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
-        formatter.setRoundingMode( RoundingMode.DOWN );
+        formatter.setRoundingMode( RoundingMode.HALF_UP );
         return formatter.format(newAmount);
     }
 
@@ -328,7 +338,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
         double newAmount = Double.parseDouble(amount) / exchangeRates.getBtcToLocalRate();
         DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
-        formatter.setRoundingMode( RoundingMode.DOWN );
+        formatter.setRoundingMode( RoundingMode.HALF_UP );
         return formatter.format(newAmount);
     }
 

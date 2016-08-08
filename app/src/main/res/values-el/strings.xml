@@ -136,8 +136,17 @@
     <string name="scan_qr_code">Σάρωση QR κωδικού</string>
     <string name="scan_qr_code_prompt">Σαρώστε ένα QR κωδικό με Bitcoin διεύθυνση</string>
     <string name="specify_valid_bitcoin_address_message">Παρακαλώ ορίστε μία έγκυρη Bitcoin διεύθυνση για πληρωμές</string>
-    <string name="updating_exchange_rates">Ενημερώνονται οι ισοτιμίες...</string>
+    <string name="updating_exchange_rates">Αργή σύνδεση. Ενημερώνονται οι ισοτιμίες...</string>
     <string name="cancel">Ακύρωση</string>
+    <string name="transactions_report">Αναφορά</string>
+    <string name="select_time_period">Επιλέξτε περίοδο για την αναφορά συναλλαγών</string>
+    <string name="to">Μέχρι:</string>
+    <string name="from">Από:</string>
+    <string name="date_range_not_valid">Η περίοδος δεν είναι έγκυρη</string>
+    <string name="no_access_to_download_folder">Δεν επιτράπηκε η πρόσβαση στον κατάλογο Λήψεις</string>
+    <string name="access_external_storage_required_message">Χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για να γραφτεί το CSV αρχείο στον κατάλογο Λήψεις</string>
+    <string name="no_transactions_in_date_range">Δεν βρέθηκαν συναλλαγές στην περίοδο που επιλέξατε</string>
+    <string name="csv_file_saved">Το CSV αρχείο σώθηκε στον κατάλογο Λήψεις</string>
 
 
 </resources>

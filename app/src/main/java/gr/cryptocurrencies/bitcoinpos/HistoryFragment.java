@@ -1,17 +1,28 @@
 package gr.cryptocurrencies.bitcoinpos;
 
+import android.Manifest;
 import android.content.ContentValues;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -25,7 +36,10 @@ import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,6 +53,12 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     private List<HashMap<String,String>> mTransactionHistoryItemList;
     private SwipeRefreshLayout mSwipeLayout;
 
+    // datepicker values
+    private int mStartYear, mStartMonth, mEndYear, mEndMonth;
+
+    // Write external storage permission code
+    final private int WRITE_EXTERNAL_PERMISSION_CODE = 123;
+
     public HistoryFragment () {
         // Required empty public constructor
     }
@@ -46,6 +66,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -53,6 +74,11 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         super.onResume();
         updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
         updateTransactionHistoryView();
+        // set invalid dates for report export
+        mStartYear = -1;
+        mStartMonth = -1;
+        mEndYear = -1;
+        mEndMonth = -1;
     }
 
     @Override
@@ -69,6 +95,13 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         return fragmentView;
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_main, menu);
+        MenuItem item = menu.add(Menu.NONE, R.id.transactions_report, 500, R.string.transactions_report);
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        item.setIcon(R.drawable.ic_file_chart_white_24dp);
+    }
 
     // implementing SwipeRefreshLayout.OnRefreshListener
     @Override
@@ -109,7 +142,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         // Each row in the list stores amount and date of transaction -- retrieves history from DB
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-        // make sure transaction entry does not already exist:
+        // get the following columns:
         String[] tableColumns = { TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
@@ -235,6 +268,206 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
             return true;
         else
             return false;
+    }
+
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.transactions_report) {
+            getTransactionsReport();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void getTransactionsReport() {
+        if(mTransactionHistoryItemList.size() == 0) {
+            Toast.makeText(getContext(), getString(R.string.no_transaction_yet), Toast.LENGTH_SHORT).show();
+        } else {
+            showDatePicker();
+        }
+    }
+
+
+    // display dialog with explanation of why the permission is needed
+    private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
+        new AlertDialog.Builder(getActivity())
+                .setMessage(message)
+                .setPositiveButton(getString(R.string.ok), okListener)
+                .setNegativeButton(getString(R.string.cancel), null)
+                .create()
+                .show();
+    }
+
+
+    private Cursor getTransactionHistoryInRangeCursor(int startYear, int startMonth, int endYear, int endMonth) {
+        // get DB helper
+        mDbHelper = TransactionHistoryDb.getInstance(getContext());
+
+        // Each row in the list stores amount and date of transaction -- retrieves history from DB
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        // get the following columns:
+        String[] tableColumns = { TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_PRODUCT_NAME };
+
+        String paddedStartMonth = String.format("%02d", mStartMonth +1); // +1 since index starts from 0
+        String paddedEndMonth = String.format("%02d", mEndMonth +1 +1);  // 2nd +1 for sql <= text comparison
+        String whereClause = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " >= '" + mStartYear + "-" + paddedStartMonth + "' and " +
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= '" + mEndYear + "-" + paddedEndMonth + "'";
+
+        String sortOrder = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
+        Cursor c = db.query(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, null, null, null, sortOrder);
+
+        return c;
+    }
+
+    /**
+     * Displays the start and end date picker dialog
+     */
+    private void showDatePicker() {
+        // Inflate your custom layout containing 2 DatePickers
+        LayoutInflater inflater = (LayoutInflater) getLayoutInflater(null);
+        View customView = inflater.inflate(R.layout.custom_date_picker, null);
+
+        // Define your date pickers
+        final DatePicker dpStartDate = (DatePicker) customView.findViewById(R.id.dpStartDate);
+        // remove day selection
+        ((ViewGroup) dpStartDate).findViewById(Resources.getSystem().getIdentifier("day", "id", "android")).setVisibility(View.GONE);
+
+        final DatePicker dpEndDate = (DatePicker) customView.findViewById(R.id.dpEndDate);
+        // remove day selection
+        ((ViewGroup) dpEndDate).findViewById(Resources.getSystem().getIdentifier("day", "id", "android")).setVisibility(View.GONE);
+
+        // Build the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setView(customView); // Set the view of the dialog to your custom layout
+        builder.setTitle(getString(R.string.select_time_period));
+        builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener(){
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                boolean areDatesValid = checkValidDates(dpStartDate.getYear(), dpStartDate.getMonth(), dpEndDate.getYear(), dpEndDate.getMonth());
+                if(areDatesValid) {
+                    mStartYear = dpStartDate.getYear();
+                    mStartMonth = dpStartDate.getMonth();
+                    mEndYear = dpEndDate.getYear();
+                    mEndMonth = dpEndDate.getMonth();
+                    getStoragePermission();
+                } else {
+                    Toast.makeText(getContext(), R.string.date_range_not_valid, Toast.LENGTH_SHORT).show();
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // set invalid dates for report export
+                mStartYear = -1;
+                mStartMonth = -1;
+                mEndYear = -1;
+                mEndMonth = -1;
+                dialog.dismiss();
+            }
+        });
+
+        // Create and show the dialog
+        builder.create().show();
+    }
+
+    private boolean checkValidDates(int startYear, int startMonth, int endYear, int endMonth) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM");
+            String startDateStr = String.format("%d-%02d", startYear, (startMonth +1)); // +1 since first index is 0
+            Date startDate = dateFormat.parse(startDateStr);
+            String endDateStr = String.format("%d-%02d", endYear, (endMonth +1));
+            Date endDate = dateFormat.parse(endDateStr);
+            if(startDate.compareTo(endDate) > 0)
+                return false;
+            else
+                return true;
+        } catch (ParseException pe) {
+            pe.printStackTrace();
+        }
+
+        return false;
+    }
+
+
+    private void getStoragePermission() {
+        if(mStartYear != -1) {
+            Cursor transactionsInRange = getTransactionHistoryInRangeCursor(mStartYear, mStartMonth, mEndYear, mEndMonth);
+
+            if(transactionsInRange.getCount() == 0) {
+                Toast.makeText(getContext(), R.string.no_transactions_in_date_range, Toast.LENGTH_SHORT).show();
+            } else {
+                if(Build.VERSION.SDK_INT < 23) {
+                    exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth);
+                } else {
+                    // check for write external storage permission
+                    int hasWriteExternalStorage = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    if (hasWriteExternalStorage != PackageManager.PERMISSION_GRANTED) {
+                        if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                            showMessageOKCancel(getString(R.string.access_external_storage_required_message),
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                                    WRITE_EXTERNAL_PERMISSION_CODE);
+                                        }
+                                    });
+                            return;
+                        }
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                WRITE_EXTERNAL_PERMISSION_CODE);
+                        return;
+                    } else {
+                        exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth);
+                    }
+                }
+            }
+        }
+
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case WRITE_EXTERNAL_PERMISSION_CODE:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission Granted
+                    exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth);
+                } else {
+                    // Permission Denied
+                    Toast.makeText(getActivity(), R.string.no_access_to_download_folder, Toast.LENGTH_LONG).show();
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    private void exportReportInRange(int startYear, int startMonth, int endYear, int endMonth) {
+
+
+        Toast.makeText(getActivity(), R.string.csv_file_saved, Toast.LENGTH_LONG).show();
     }
 
 
