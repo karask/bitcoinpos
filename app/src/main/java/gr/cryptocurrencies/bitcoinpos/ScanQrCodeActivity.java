@@ -52,7 +52,7 @@ public class ScanQrCodeActivity extends AppCompatActivity {
                 public void run() {
                     capture.onResume();
                 }
-            }, 10);
+            }, 100);
         } else {
             capture.onResume();
         }
