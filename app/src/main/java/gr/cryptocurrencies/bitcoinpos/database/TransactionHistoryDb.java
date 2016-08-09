@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class TransactionHistoryDb extends SQLiteOpenHelper {
     private static TransactionHistoryDb sInstance;
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
     private static final String DATABASE_NAME = "History.db";
 
     public static final String TRANSACTIONS_TABLE_NAME = "transactions";
@@ -25,6 +25,7 @@ public class TransactionHistoryDb extends SQLiteOpenHelper {
     public static final String TRANSACTIONS_COLUMN_BITCOIN_ADDRESS = "bitcoin_address";
     public static final String TRANSACTIONS_COLUMN_IS_CONFIRMED = "is_confirmed";
     public static final String TRANSACTIONS_COLUMN_PRODUCT_NAME = "product_name";
+    public static final String TRANSACTIONS_COLUMN_EXCHANGE_RATE = "exchange_rate";
 
     private static final String TRANSACTIONS_TABLE_CREATE =
             "CREATE TABLE " + TRANSACTIONS_TABLE_NAME + " (" +
@@ -37,6 +38,7 @@ public class TransactionHistoryDb extends SQLiteOpenHelper {
                     TRANSACTIONS_COLUMN_MERCHANT_NAME + " TEXT NOT NULL , " +
                     TRANSACTIONS_COLUMN_BITCOIN_ADDRESS + " TEXT NOT NULL , " +
                     TRANSACTIONS_COLUMN_PRODUCT_NAME + " TEXT , " +
+                    TRANSACTIONS_COLUMN_EXCHANGE_RATE + " TEXT , " +
                     TRANSACTIONS_COLUMN_IS_CONFIRMED + " NUMERIC NOT NULL )";
 
     private static final String TRANSACTIONS_TABLE_DELETE =
@@ -72,9 +74,14 @@ public class TransactionHistoryDb extends SQLiteOpenHelper {
         //onCreate(db);
 
         // otherwise migration code would be required
-        // add product_name column
-        if(newVersion > oldVersion) {
+        // add product_name column if old version was 1
+        if(newVersion > oldVersion && oldVersion == 1) {
             db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_PRODUCT_NAME + " TEXT");
+            db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_EXCHANGE_RATE + " TEXT");
+        }
+
+        if(newVersion > oldVersion && oldVersion == 2) {
+            db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_EXCHANGE_RATE + " TEXT");
         }
     }
 

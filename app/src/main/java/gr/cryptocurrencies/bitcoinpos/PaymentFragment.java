@@ -160,7 +160,6 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                             .setAction(R.string.retry, new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    Toast.makeText(getContext(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
                                     currencyToggle.performClick();
                                 }
 
@@ -255,7 +254,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                                 isPrimaryAmount = true;
                             }
 
-                            DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount, secondaryAmount, isPrimaryAmount, mLocalCurrency);
+                            DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount,
+                                    secondaryAmount, isPrimaryAmount, mLocalCurrency, String.valueOf(exchangeRates.getBtcToLocalRate()));
                             // for API >= 23 the title is disable by default -- we set a style that enables it
                             myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
                             myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));

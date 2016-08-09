@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -36,6 +37,10 @@ import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -317,20 +322,20 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
         // get the following columns:
         String[] tableColumns = { TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME,
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_PRODUCT_NAME,
                 TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_PRODUCT_NAME };
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE };
 
         String paddedStartMonth = String.format("%02d", mStartMonth +1); // +1 since index starts from 0
         String paddedEndMonth = String.format("%02d", mEndMonth +1 +1);  // 2nd +1 for sql <= text comparison
         String whereClause = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " >= '" + mStartYear + "-" + paddedStartMonth + "' and " +
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= '" + mEndYear + "-" + paddedEndMonth + "'";
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= '" + mEndYear + "-" + paddedEndMonth + "' and " +
+                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED + " = 1";
 
         String sortOrder = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
         Cursor c = db.query(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, null, null, null, sortOrder);
@@ -418,7 +423,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 Toast.makeText(getContext(), R.string.no_transactions_in_date_range, Toast.LENGTH_SHORT).show();
             } else {
                 if(Build.VERSION.SDK_INT < 23) {
-                    exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth);
+                    exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth, transactionsInRange);
                 } else {
                     // check for write external storage permission
                     int hasWriteExternalStorage = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -438,7 +443,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                                 WRITE_EXTERNAL_PERMISSION_CODE);
                         return;
                     } else {
-                        exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth);
+                        exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth, transactionsInRange);
                     }
                 }
             }
@@ -453,7 +458,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
             case WRITE_EXTERNAL_PERMISSION_CODE:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission Granted
-                    exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth);
+                    exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth, null);
                 } else {
                     // Permission Denied
                     Toast.makeText(getActivity(), R.string.no_access_to_download_folder, Toast.LENGTH_LONG).show();
@@ -464,10 +469,60 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         }
     }
 
-    private void exportReportInRange(int startYear, int startMonth, int endYear, int endMonth) {
+    private void exportReportInRange(int startYear, int startMonth, int endYear, int endMonth, Cursor confirmedTxsInRange) {
+        Cursor c;
+        StringBuilder csvStr = new StringBuilder();
+        double totalBitcoins = 0;
 
+        // add headers
+        csvStr.append("Transaction Id,Bitcoin Amount,Local Amount,Local Currency,Exchange Rage (BTC->Local),Created At (UTC),Merchant Name,Product Name,Bitcoin Address\n");
 
-        Toast.makeText(getActivity(), R.string.csv_file_saved, Toast.LENGTH_LONG).show();
+        if(confirmedTxsInRange == null)
+            c = getTransactionHistoryInRangeCursor(startYear, startMonth, endYear, endMonth);
+        else
+            c = confirmedTxsInRange;
+
+        // for each tx enter a row in csv file
+        // for each unconfirmed transaction check if confirmed
+        if(c.moveToFirst()) {
+            do {
+                csvStr.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                        c.getString(0), c.getString(1),
+                        c.getString(2), c.getString(3),
+                        c.getString(8) == null ? "" : c.getString(8),   // exchange rate
+                        c.getString(4), c.getString(5),
+                        c.getString(6) == null ? "" : c.getString(6),   // product name
+                        c.getString(7)                                  // bitcoin address
+                ));
+                totalBitcoins += Double.parseDouble(c.getString(1));
+            } while (c.moveToNext());
+
+        }
+
+        csvStr.append("\nTotal in bitcoins: " + String.format("%.8f", totalBitcoins));
+
+        // get Downloads folders path
+        File downloadsPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        int counter = 1;
+        File csvFile;
+        FileOutputStream csvStream;
+        csvFile = new File(downloadsPath.toString() + "/BitcoinPoS-" + counter + ".csv");
+        while(csvFile.exists()) {
+            counter++;
+            csvFile = new File(downloadsPath.toString() + "/BitcoinPoS-" + counter + ".csv");
+        }
+
+        try {
+            csvStream = new FileOutputStream(csvFile);
+            csvStream.write(csvStr.toString().getBytes());
+            csvStream.close();
+        } catch (FileNotFoundException fnfe) {
+            fnfe.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+
+        Toast.makeText(getActivity(), getString(R.string.csv_file_saved, csvFile.getName()), Toast.LENGTH_LONG).show();
     }
 
 

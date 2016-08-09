@@ -57,6 +57,7 @@ public class PaymentRequestFragment extends DialogFragment  {
     private static final String ARG_SECONDARY_AMOUNT = "secondaryAmount";
     private static final String ARG_BITCOIN_IS_PRIMARY = "bitcoinIsPrimary";
     private static final String ARG_LOCAL_CURRENCY = "localCurrency";
+    private static final String ARG_EXCHANGE_RATE = "exchangeRate";
 
     private String mBitcoinAddress;
     private String mMerchantName;
@@ -64,6 +65,7 @@ public class PaymentRequestFragment extends DialogFragment  {
     private String mSecondaryAmount;
     private boolean mBitcoinIsPrimary;
     private String mLocalCurrency;
+    private String mExchangeRate;
 
     private ImageView mQrCodeImage;
     private Bitmap mQrCodeBitmap;
@@ -98,10 +100,11 @@ public class PaymentRequestFragment extends DialogFragment  {
      * @param secondaryAmount
      * @param bitcoinIsPrimary
      * @param localCurrency
+     * @param exchangeRate
      * @return A new instance of fragment PaymentRequestFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount, boolean bitcoinIsPrimary, String localCurrency) {
+    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount, boolean bitcoinIsPrimary, String localCurrency, String exchangeRate) {
         PaymentRequestFragment fragment = new PaymentRequestFragment();
         Bundle args = new Bundle();
         args.putString(ARG_BITCOIN_ADDRESS, bitcoinAddress);
@@ -110,6 +113,7 @@ public class PaymentRequestFragment extends DialogFragment  {
         args.putString(ARG_SECONDARY_AMOUNT, secondaryAmount);
         args.putBoolean(ARG_BITCOIN_IS_PRIMARY, bitcoinIsPrimary);
         args.putString(ARG_LOCAL_CURRENCY, localCurrency);
+        args.putString(ARG_EXCHANGE_RATE, exchangeRate);
         fragment.setArguments(args);
         return fragment;
     }
@@ -125,6 +129,8 @@ public class PaymentRequestFragment extends DialogFragment  {
             mSecondaryAmount = getArguments().getString(ARG_SECONDARY_AMOUNT);
             mBitcoinIsPrimary = getArguments().getBoolean(ARG_BITCOIN_IS_PRIMARY);
             mLocalCurrency = getArguments().getString(ARG_LOCAL_CURRENCY);
+            mExchangeRate = getArguments().getString(ARG_EXCHANGE_RATE);
+
             //Find screen size
             WindowManager manager = (WindowManager) getActivity().getSystemService(getContext().WINDOW_SERVICE);
             Display display = manager.getDefaultDisplay();
@@ -401,7 +407,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                                             }
 
                                             addTransaction(mPaymentTransaction, btcAmount, localAmount, mLocalCurrency,
-                                                    createdAt, null, mMerchantName, mBitcoinAddress, false, null);
+                                                    createdAt, null, mMerchantName, mBitcoinAddress, false, null, mExchangeRate);
                                         }
                                     }
                                 }
@@ -480,7 +486,8 @@ public class PaymentRequestFragment extends DialogFragment  {
                                 double localAmount, String localCurrency,
                                 String createdAt, String confirmedAt,
                                 String merchantName, String bitcoinAddress,
-                                boolean isConfirmed, String productName) {
+                                boolean isConfirmed, String productName,
+                                String exchangeRate) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         // make sure transaction entry does not already exist:
@@ -502,7 +509,7 @@ public class PaymentRequestFragment extends DialogFragment  {
             values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
             values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
             values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_PRODUCT_NAME, productName);
-
+            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE, exchangeRate);
             db.insert(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, null, values);
         }
     }
