@@ -134,6 +134,8 @@ public class SettingsActivity extends AppCompatActivity {
                         integrator.setCaptureActivity(ScanQrCodeActivity.class);
                         integrator.setPrompt(getString(R.string.scan_qr_code_prompt));
                         integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+//                        integrator.addExtra("SCAN_WIDTH", 200);
+//                        integrator.addExtra("SCAN_HEIGHT", 200);
                         integrator.initiateScan();
                     }
                 });
