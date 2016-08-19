@@ -20,7 +20,8 @@
         android:theme="@style/MyMaterialTheme">
         <activity
             android:name="gr.cryptocurrencies.bitcoinpos.MainActivity"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -11,48 +11,141 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <TextView
-            android:layout_width="wrap_content"
+
+        <LinearLayout
+            android:id="@+id/container_total_amount"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_heightPercent="20%"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="0"
-            android:textAlignment="gravity"
+            app:layout_heightPercent="17%"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0px"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:background="@drawable/total_amount"
+                android:orientation="vertical" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0px"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:gravity="bottom"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:text="@string/items"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0px"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:gravity="top"
+                    android:text="0"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0px"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:layout_gravity="center"
+                android:background="@drawable/total_amount"
+                android:orientation="vertical" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0px"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:gravity="bottom"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:text="@string/total"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="0px"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:gravity="top"
+                    android:textColor="@android:color/black"
+                    android:text="0"/>
+
+            </LinearLayout>
+
+
+            <ToggleButton
+                android:layout_weight="1"
+                android:layout_width="0px"
+                android:layout_height="match_parent"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textColor="@color/colorPrimaryDark"
+                android:id="@+id/currencyToggleButton"
+                android:textOff="BTC"
+                android:background="@drawable/total_amount" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/container_product_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_heightPercent="10%"
             android:gravity="center"
-            android:background="@drawable/amount"
-            android:id="@+id/amountTextView"
-            android:layout_alignParentTop="true"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:paddingLeft="24dp"
-            android:paddingRight="24dp"
+            android:orientation="horizontal"
+            android:background="@color/numpad_selector"
+            android:layout_below="@id/container_total_amount">
 
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_toLeftOf="@+id/currencyToggleButton"
-            android:layout_toStartOf="@+id/currencyToggleButton"
-            android:layout_alignBottom="@+id/currencyToggleButton" />
+            <EditText
+                android:layout_width="0px"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.65"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:hint="@string/product_name_optional"
+                android:textAlignment="viewStart"
+                android:gravity="start"
+                android:id="@+id/productNameTextView"
+                android:singleLine="true"
+                android:cursorVisible="false"
+                android:paddingLeft="4dp"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"/>
 
-        <ToggleButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLargeInverse"
-            android:textColor="@color/colorPrimaryDark"
-            app:layout_heightPercent="20%"
-            android:id="@+id/currencyToggleButton"
-            android:textOff="BTC"
-            android:background="@drawable/amount"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true" />
+            <TextView
+                android:layout_weight="0.35"
+                android:layout_width="0px"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="0"
+                android:textAlignment="viewEnd"
+                android:gravity="end"
+                android:layout_marginRight="4dp"
+                android:id="@+id/amountTextView"
+                android:padding="4dp"
+
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@+id/currencyToggleButton"
+                android:layout_toStartOf="@+id/currencyToggleButton"
+                android:layout_alignBottom="@+id/currencyToggleButton" />
+
+        </LinearLayout>
+
+
 
         <LinearLayout
             android:id="@+id/buttons_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_heightPercent="15%"
+            app:layout_heightPercent="14%"
             android:orientation="horizontal"
-            android:layout_below="@id/currencyToggleButton">
+            android:layout_below="@id/container_product_name">
 
             <Button
                 android:id="@+id/btn_1"
@@ -78,13 +171,21 @@
                 android:layout_height="match_parent"
                 android:text="3" />
 
+            <ImageButton
+                android:id="@+id/btn_inv"
+                android:background="@color/numpad_selector"
+                android:layout_width="0px"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_view_list_black_24dp" />
+
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/buttons_container2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_heightPercent="15%"
+            app:layout_heightPercent="14%"
             android:orientation="horizontal"
             android:layout_below="@id/buttons_container">
 
@@ -112,13 +213,21 @@
                 android:layout_height="match_parent"
                 android:text="6" />
 
+            <ImageButton
+                android:id="@+id/btn_clear"
+                android:background="@color/numpad_selector"
+                android:layout_width="0px"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_close_box_black_24dp" />
+
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/buttons_container3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_heightPercent="15%"
+            app:layout_heightPercent="14%"
             android:orientation="horizontal"
             android:layout_below="@id/buttons_container2">
 
@@ -146,32 +255,6 @@
                 android:layout_height="match_parent"
                 android:text="9" />
 
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/buttons_container4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_heightPercent="15%"
-            android:orientation="horizontal"
-            android:layout_below="@id/buttons_container3">
-
-            <Button
-                android:id="@+id/btn_dot"
-                android:background="@color/numpad_selector"
-                android:layout_width="0px"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:text="." />
-
-            <Button
-                android:id="@+id/btn_0"
-                android:background="@color/numpad_selector"
-                android:layout_width="0px"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:text="0" />
-
             <ImageButton
                 android:id="@+id/btn_backspace"
                 android:background="@color/numpad_selector"
@@ -179,6 +262,40 @@
                 android:layout_weight="1"
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_backspace_black_18dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/buttons_container4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_heightPercent="14%"
+            android:orientation="horizontal"
+            android:layout_below="@id/buttons_container3">
+
+            <Button
+                android:id="@+id/btn_dot"
+                android:background="@color/numpad_selector"
+                android:layout_width="0px"
+                android:layout_weight="0.5"
+                android:layout_height="match_parent"
+                android:text="." />
+
+            <Button
+                android:id="@+id/btn_0"
+                android:background="@color/numpad_selector"
+                android:layout_width="0px"
+                android:layout_weight="0.5"
+                android:layout_height="match_parent"
+                android:text="0" />
+
+            <ImageButton
+                android:id="@+id/btn_add"
+                android:background="@color/numpad_selector"
+                android:layout_width="0px"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_cart_plus_black_24dp" />
 
         </LinearLayout>
 

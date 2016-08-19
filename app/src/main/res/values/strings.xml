@@ -164,5 +164,8 @@
     <string name="access_external_storage_required_message">Access to external storage is required to write the CSV file in the Downloads folder.</string>
     <string name="no_transactions_in_date_range">No confirmed transactions found in selected date range</string>
     <string name="csv_file_saved">File %1$s saved in Download folder</string>
+    <string name="product_name_optional">Product name (optional)</string>
+    <string name="items">Items</string>
+    <string name="total">Total</string>
 
 </resources>

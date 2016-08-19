@@ -147,6 +147,9 @@
     <string name="access_external_storage_required_message">Χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για να γραφτεί το CSV αρχείο στον κατάλογο Λήψεις</string>
     <string name="no_transactions_in_date_range">Δεν βρέθηκαν επιβεβαιωμένες συναλλαγές την περίοδο που επιλέξατε</string>
     <string name="csv_file_saved">Το αρχείο %1$s σώθηκε στον κατάλογο Λήψεις</string>
+    <string name="product_name_optional">Όνομα προϊόντος (προαιρετικό)</string>
+    <string name="items">Είδη</string>
+    <string name="total">Σύνολο</string>
 
 
 </resources>

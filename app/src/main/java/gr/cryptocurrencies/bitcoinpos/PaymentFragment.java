@@ -1,6 +1,7 @@
 package gr.cryptocurrencies.bitcoinpos;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -8,14 +9,19 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.PreferenceManager;
+import android.support.v7.widget.AppCompatEditText;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +44,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
     private final double maxBTCAmount = 10000;
 
     Button keypad1, keypad2, keypad3, keypad4, keypad5, keypad6, keypad7, keypad8, keypad9, keypad0, keypadDot;
+    EditText productNameEditText;
     ImageButton keypadBackspace;
     Button requestPayment;
     ToggleButton currencyToggle;
@@ -81,6 +88,21 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         currencyToggle.setTextOn(mLocalCurrency);
         currencyToggle.toggle();
         currencyToggle.setOnClickListener(this);
+
+        productNameEditText = (EditText) fragmentView.findViewById(R.id.productNameTextView);
+        productNameEditText.setOnClickListener(this);
+        productNameEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                productNameEditText.setCursorVisible(false);
+                if (event != null&& (event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                    InputMethodManager in = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    in.hideSoftInputFromWindow(productNameEditText.getApplicationWindowToken(),InputMethodManager.HIDE_NOT_ALWAYS);
+                }
+                return false;
+            }
+        });
+
 
         keypad1 = (Button) fragmentView.findViewById(R.id.btn_1);
         keypad1.setOnClickListener(this);
@@ -134,7 +156,13 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
     @Override
     public void onClick(View v) {
-        if(v instanceof ToggleButton) {
+        if(!(v instanceof EditText)) {
+            productNameEditText.setCursorVisible(false);
+        }
+
+        if(v instanceof EditText) {
+            productNameEditText.setCursorVisible(true);
+        } else if(v instanceof ToggleButton) {
             // only one toggle button: currency converter
             final ToggleButton  currencyToggle = (ToggleButton) v;
             String currentAmount = amount.getText().toString();
