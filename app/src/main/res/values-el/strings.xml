@@ -147,9 +147,22 @@
     <string name="access_external_storage_required_message">Χρειάζεται πρόσβαση στον αποθηκευτικό χώρο για να γραφτεί το CSV αρχείο στον κατάλογο Λήψεις</string>
     <string name="no_transactions_in_date_range">Δεν βρέθηκαν επιβεβαιωμένες συναλλαγές την περίοδο που επιλέξατε</string>
     <string name="csv_file_saved">Το αρχείο %1$s σώθηκε στον κατάλογο Λήψεις</string>
-    <string name="product_name_optional">Όνομα προϊόντος (προαιρετικό)</string>
+    <string name="product_name_optional">Όνομα είδους (προαιρετικό)</string>
     <string name="items">Είδη</string>
     <string name="total">Σύνολο</string>
-
+    <string name="no_items_yet">Δεν προστέθηκαν είδη/προϊόντα ακόμα.</string>
+    <string name="add_item">Προσθήκη είδους</string>
+    <string name="item_name">Όνομα</string>
+    <string name="item_price_currency_agnostic">Τιμή (ασχέτως νομίσματος)</string>
+    <string name="add">Προσθήκη</string>
+    <string name="name_price_cannot_be_empty">Το όνομα και η τιμή πρέπει να δωθούν.</string>
+    <string name="select">Επιλέξτε</string>
+    <string-array name="item_list_actions">
+        <item>Αλλαγή είδους</item>
+        <item>Διαγραφή είδους</item>
+    </string-array>
+    <string name="update">Ενημέρωση</string>
+    <string name="cart">Καλάθι</string>
+    <string name="remove_all">Αφαίρεση όλων</string>
 
 </resources>

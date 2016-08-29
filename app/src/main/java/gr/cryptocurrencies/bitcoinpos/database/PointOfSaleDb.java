@@ -7,10 +7,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 /**
  * Created by kostas on 12/7/2016.
  */
-public class TransactionHistoryDb extends SQLiteOpenHelper {
-    private static TransactionHistoryDb sInstance;
+public class PointOfSaleDb extends SQLiteOpenHelper {
+    private static PointOfSaleDb sInstance;
 
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
     private static final String DATABASE_NAME = "History.db";
 
     public static final String TRANSACTIONS_TABLE_NAME = "transactions";
@@ -45,19 +45,47 @@ public class TransactionHistoryDb extends SQLiteOpenHelper {
             "DROP TABLE IF EXISTS " + TRANSACTIONS_TABLE_NAME;
 
 
+
+
+    public static final String ITEMS_TABLE_NAME = "items";
+
+    public static final String ITEMS_COLUMN_ΙΤΕΜ_ID = "item_id";
+    public static final String ITEMS_COLUMN_NAME = "name";
+    public static final String ITEMS_COLUMN_DESCRIPTION = "description";
+    public static final String ITEMS_COLUMN_COLOR = "color";
+    public static final String ITEMS_COLUMN_CREATED_AT = "created_at";
+    public static final String ITEMS_COLUMN_DISPLAY_ORDER = "display_order";
+    public static final String ITEMS_COLUMN_AMOUNT = "amount";
+    public static final String ITEMS_COLUMN_IS_AVAILABLE = "is_available";
+
+    private static final String ITEMS_TABLE_CREATE =
+            "CREATE TABLE " + ITEMS_TABLE_NAME + " (" +
+                    ITEMS_COLUMN_ΙΤΕΜ_ID + " INTEGER PRIMARY KEY AUTOINCREMENT , " +
+                    ITEMS_COLUMN_NAME + " TEXT NOT NULL ,  " +
+                    ITEMS_COLUMN_DESCRIPTION + " TEXT , " +
+                    ITEMS_COLUMN_COLOR + " TEXT , " +
+                    ITEMS_COLUMN_CREATED_AT + " TEXT NOT NULL , " +
+                    ITEMS_COLUMN_DISPLAY_ORDER + " INTEGER NOT NULL , " +
+                    ITEMS_COLUMN_AMOUNT + " REAL NOT NULL , " +
+                    ITEMS_COLUMN_IS_AVAILABLE + " NUMERIC NOT NULL )";
+
+
+
+
+
     // implement singleton pattern
-    public static synchronized TransactionHistoryDb getInstance(Context context) {
+    public static synchronized PointOfSaleDb getInstance(Context context) {
         // Use the application context, which will ensure that you
         // don't accidentally leak an Activity's context.
         // See this article for more information: http://bit.ly/6LRzfx
         if (sInstance == null) {
-            sInstance = new TransactionHistoryDb(context.getApplicationContext());
+            sInstance = new PointOfSaleDb(context.getApplicationContext());
         }
         return sInstance;
     }
 
     // constructor is private for singleton pattern
-    private TransactionHistoryDb(Context context) {
+    private PointOfSaleDb(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -65,6 +93,7 @@ public class TransactionHistoryDb extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(TRANSACTIONS_TABLE_CREATE);
+        db.execSQL(ITEMS_TABLE_CREATE);
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -75,13 +104,23 @@ public class TransactionHistoryDb extends SQLiteOpenHelper {
 
         // otherwise migration code would be required
         // add product_name column if old version was 1
-        if(newVersion > oldVersion && oldVersion == 1) {
-            db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_PRODUCT_NAME + " TEXT");
-            db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_EXCHANGE_RATE + " TEXT");
-        }
+        if (newVersion > oldVersion) {
 
-        if(newVersion > oldVersion && oldVersion == 2) {
-            db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_EXCHANGE_RATE + " TEXT");
+            if (oldVersion == 1) {
+                db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_PRODUCT_NAME + " TEXT");
+                db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_EXCHANGE_RATE + " TEXT");
+                db.execSQL(ITEMS_TABLE_CREATE);
+            }
+
+            if (oldVersion == 2) {
+                db.execSQL("ALTER TABLE " + TRANSACTIONS_TABLE_NAME + " ADD COLUMN " + TRANSACTIONS_COLUMN_EXCHANGE_RATE + " TEXT");
+                db.execSQL(ITEMS_TABLE_CREATE);
+            }
+
+            if (oldVersion == 3) {
+                db.execSQL(ITEMS_TABLE_CREATE);
+            }
+
         }
     }
 

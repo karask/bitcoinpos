@@ -3,16 +3,30 @@ package gr.cryptocurrencies.bitcoinpos;
 import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
+import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
+
+import java.util.Date;
+import java.util.List;
+
+import gr.cryptocurrencies.bitcoinpos.database.Item;
+import gr.cryptocurrencies.bitcoinpos.database.ItemHelper;
 
 public class MainActivity extends AppCompatActivity implements PaymentRequestFragment.OnFragmentInteractionListener,
-                                                               AboutFragment.OnFragmentInteractionListener {
+                                                               AboutFragment.OnFragmentInteractionListener,
+                                                               ItemFragment.OnFragmentInteractionListener,
+                                                               AddItemDialogFragment.OnFragmentInteractionListener,
+                                                               ItemActionListFragment.OnFragmentInteractionListener {
 
     private Toolbar mToolbar;
     private TabLayout mTabLayout;
@@ -39,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
             action bar.
         */
         mViewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
+        mViewPagerAdapter.addFragment(new ItemFragment());
         mViewPagerAdapter.addFragment(new PaymentFragment());
         mViewPagerAdapter.addFragment(new HistoryFragment());
         mViewPager.setAdapter(mViewPagerAdapter);
@@ -48,12 +63,14 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
             TabLayout.newTab() method creates a tab view, Now a Tab view is not the view
             which is below the tabs, its the tab itself.
         */
+        final TabLayout.Tab item = mTabLayout.newTab();
         final TabLayout.Tab payment = mTabLayout.newTab();
         final TabLayout.Tab history = mTabLayout.newTab();
 
         /*
             Setting Title text for our tabs respectively
         */
+        item.setText(R.string.items);
         payment.setText(R.string.payment);
         history.setText(R.string.history);
 
@@ -62,8 +79,9 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
             As I want home at first position I am passing home and 0 as argument to
             the tablayout and like wise for other tabs as well
         */
-        mTabLayout.addTab(payment, 0);
-        mTabLayout.addTab(history, 1);
+        mTabLayout.addTab(item, 0);
+        mTabLayout.addTab(payment, 1);
+        mTabLayout.addTab(history, 2);
 
         /*
             TabTextColor sets the color for the title of the tabs, passing a ColorStateList here makes
@@ -109,6 +127,10 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
         mTabLayout.setOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
 
 
+        /*
+            Select middle tab as default
+         */
+        mViewPager.setCurrentItem(1);
 
     }
 
@@ -155,7 +177,9 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     }
 
 
-    // implements PaymentRequestFragment inner interface methods
+
+
+    // implements PaymentRequestFragment inner interface methods -- from PaymentRequestFragment
     public void onPaymentCancellation() {
         // close dialog fragment
         getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentByTag(getString(R.string.request_payment_fragment_tag))).commit();
@@ -163,8 +187,112 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
 
 
     @Override
+    // from AboutFragment
     public void onAboutOk() {
         // close dialog fragment
         getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentByTag(getString(R.string.about_fragment_tag))).commit();
     }
+
+    @Override
+    // from ItemFragment
+    public void onListItemClickFragmentInteraction(Item item) {
+        DialogFragment myDialog = ItemActionListFragment.newInstance(item.getItemId().toString());
+        // for API >= 23 the title is disable by default -- we set a style that enables it
+        myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.ItemActionListDialogFragment);
+        myDialog.show(getSupportFragmentManager(), getString(R.string.item_action_list_dialog_fragment_tag));
+    }
+
+
+    @Override
+    // from AddItemDialogFragment
+    public void onAddOrUpdateItemFragmentInteraction(int itemId, String itemName, double itemPrice) {
+        // TODO: for now order is not implemented (always 0)
+        // TODO: currently only name and price/amount can be set!
+
+        // itemId is -1 when adding new item
+        boolean isEditMode = itemId >= 0;
+
+        // get ItemFragment's recycler view and adapter to add and display the item
+        // this is a quick way of getting the fragment at position 0 (ItemFragment)
+        ItemFragment itemFragment = (ItemFragment) mViewPagerAdapter.instantiateItem(null, 0);
+        RecyclerView recyclerView = itemFragment.getRecyclerView();
+        ItemRecyclerViewAdapter recyclerViewAdapter = (ItemRecyclerViewAdapter) recyclerView.getAdapter();
+
+        // get DB helper for items
+        ItemHelper itemHelper = ItemHelper.getInstance(getApplicationContext());
+
+        Item item;
+        if(isEditMode) {
+            // get item and modify
+            item = itemHelper.get(itemId);
+            if(item != null) {
+                item.setName(itemName);
+                item.setAmount(itemPrice);
+
+                // update in db
+                itemHelper.update(item);
+
+                // update UI
+                recyclerViewAdapter.updateItem(item);
+            }
+        } else {
+            // create new item
+            item = new Item(null, itemName, "", itemPrice, 0, "", true, new Date());
+
+            // add the item to the DB
+            int newItemId = itemHelper.insert(item);
+
+            // update the memory object with the id generated from the DB
+            item.setItemId(newItemId);
+
+            if(recyclerViewAdapter.getItemCount() == 0) {
+                // first item added ever
+                recyclerView.setVisibility(View.VISIBLE);
+                itemFragment.getEmptyView().setVisibility(View.GONE);
+            }
+            recyclerViewAdapter.addItem(item);
+
+        }
+
+    }
+
+    @Override
+    // from AddItemDialogFragment
+    public void onCancelItemFragmentInteraction() {
+        getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentByTag(getString(R.string.add_item_dialog_fragment_tag))).commit();
+    }
+
+    @Override
+    // from ItemActionListFragment
+    public void onEditItemAction(int id) {
+        // get item from database
+        ItemHelper itemHelper = ItemHelper.getInstance(getApplicationContext());
+        Item itemToUpdate = itemHelper.get(id);
+        if(itemToUpdate != null) {
+            DialogFragment myDialog = AddItemDialogFragment.newInstance(id, itemToUpdate.getName(), itemToUpdate.getAmount());
+            // for API >= 23 the title is disable by default -- we set a style that enables it
+            myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.AddItemDialogFragment);
+            myDialog.show(getSupportFragmentManager(), getString(R.string.add_item_dialog_fragment_tag));
+        }
+    }
+
+    @Override
+    // from ItemActionListFragment
+    public void onDeleteItemAction(int id) {
+        ItemHelper itemHelper = ItemHelper.getInstance(getApplicationContext());
+        if(itemHelper.delete(id)) {
+            // update UI as well (get ItemFragment's recycler view and adapter
+            ItemFragment itemFragment = (ItemFragment) mViewPagerAdapter.instantiateItem(null, 0);
+            RecyclerView recyclerView = itemFragment.getRecyclerView();
+            ItemRecyclerViewAdapter recyclerViewAdapter = (ItemRecyclerViewAdapter) recyclerView.getAdapter();
+            if(recyclerViewAdapter.getItemCount() == 1) {
+                // if last item is deleted
+                recyclerView.setVisibility(View.GONE);
+                itemFragment.getEmptyView().setVisibility(View.VISIBLE);
+            }
+            recyclerViewAdapter.removeItem(id);
+        }
+    }
+
+
 }

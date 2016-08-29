@@ -9,52 +9,54 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.PreferenceManager;
-import android.support.v7.widget.AppCompatEditText;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import gr.cryptocurrencies.bitcoinpos.database.Item;
 import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
 import gr.cryptocurrencies.bitcoinpos.network.Utilities;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
+import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by kostas on 14/6/2016.
  */
 public class PaymentFragment extends Fragment implements View.OnClickListener, FragmentIsNowVisible {
 
-    private final double maxBTCAmount = 10000;
-
+    CoordinatorLayout coordinatorLayout;
+    LinearLayout totalItemsCountLinearLayout;
     Button keypad1, keypad2, keypad3, keypad4, keypad5, keypad6, keypad7, keypad8, keypad9, keypad0, keypadDot;
     EditText productNameEditText;
-    ImageButton keypadBackspace;
+    ImageButton keypadBackspace, keypadInventory, keypadClear, keypadAddToCart;
     Button requestPayment;
     ToggleButton currencyToggle;
     TextView amount;
-    CoordinatorLayout coordinatorLayout;
+    TextView totalAmountTextView;
+    TextView totalItemsCountTextView;
 
     SharedPreferences mSharedPreferences;
     String mLocalCurrency;
     String mBitcoinPaymentAddress;
     String mMerchantName;
+
+    List<Item> mItemsInCart = new ArrayList<>();
 
     public PaymentFragment() {
         // Required empty public constructor
@@ -81,7 +83,12 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
         coordinatorLayout = (CoordinatorLayout) fragmentView.findViewById(R.id.coordinatorLayout);
 
+        totalItemsCountLinearLayout = (LinearLayout) fragmentView.findViewById(R.id.total_items_count_linear_layout);
+        totalItemsCountLinearLayout.setOnClickListener(this);
+
         amount = (TextView) fragmentView.findViewById(R.id.amountTextView);
+        totalAmountTextView = (TextView) fragmentView.findViewById(R.id.totalAmountTextView);
+        totalItemsCountTextView = (TextView) fragmentView.findViewById(R.id.totalItemsCountTextView);
 
         currencyToggle = (ToggleButton) fragmentView.findViewById(R.id.currencyToggleButton);
         currencyToggle.setTextOff("BTC");
@@ -128,6 +135,12 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         keypadDot.setOnClickListener(this);
         keypadBackspace = (ImageButton) fragmentView.findViewById(R.id.btn_backspace);
         keypadBackspace.setOnClickListener(this);
+        keypadInventory = (ImageButton) fragmentView.findViewById(R.id.btn_inv);
+        keypadInventory.setOnClickListener(this);
+        keypadClear = (ImageButton) fragmentView.findViewById(R.id.btn_clear);
+        keypadClear.setOnClickListener(this);
+        keypadAddToCart= (ImageButton) fragmentView.findViewById(R.id.btn_add_to_cart);
+        keypadAddToCart.setOnClickListener(this);
 
         requestPayment = (Button) fragmentView.findViewById(R.id.request_payment);
         requestPayment.setOnClickListener(this);
@@ -162,20 +175,28 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
         if(v instanceof EditText) {
             productNameEditText.setCursorVisible(true);
+        } else if(v instanceof LinearLayout) {
+            if(mItemsInCart.size() > 0) {
+//                // only one clickable linear layout (items counter)
+//                DialogFragment myDialog = ShowItemListFragment.newInstance(ShowItemListFragment.DialogType.SHOW_CART_LIST_ITEMS.name(), mItemsInCart);
+//                // for API >= 23 the title is disable by default -- we set a style that enables it
+//                myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.ShowItemListDialogFragment);
+//                myDialog.show(getFragmentManager(), getString(R.string.item_action_list_dialog_fragment_tag));
+            }
         } else if(v instanceof ToggleButton) {
             // only one toggle button: currency converter
             final ToggleButton  currencyToggle = (ToggleButton) v;
-            String currentAmount = amount.getText().toString();
+            String currentAmount = totalAmountTextView.getText().toString();
             ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
             if(exchangeRates.getLastUpdated() != null) {
                 if(currentAmount != "0") {
                     if (!currencyToggle.isChecked()) {
                         // was local currency - convert to BTC
-                        amount.setText(getBtcFromLocalCurrency(currentAmount));
+                        totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
                     } else {
                         // was BTC - convert to local currency
-                        amount.setText(getLocalCurrencyFromBtc(currentAmount));
+                        totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
                     }
                 }
             } else {
@@ -200,14 +221,51 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 }
             }
         } else if(v instanceof ImageButton) {
-            // only one image button: backspace
-            String currentAmount = amount.getText().toString();
-            // delete last digit
-            currentAmount = currentAmount.substring(0, currentAmount.length() - 1);
-            if (currentAmount.length() == 0)
-                amount.setText("0");
-            else
-                amount.setText(currentAmount);
+            ImageButton imageButton = (ImageButton) v;
+            switch (imageButton.getId()) {
+                case  R.id.btn_backspace:
+                    String currentAmount = amount.getText().toString();
+                    // delete last digit
+                    currentAmount = currentAmount.substring(0, currentAmount.length() - 1);
+                    if (currentAmount.length() == 0)
+                        amount.setText("0");
+                    else
+                        amount.setText(currentAmount);
+                    break;
+                case R.id.btn_clear:
+                    amount.setText("0");
+                    productNameEditText.setText("");
+                    break;
+                case R.id.btn_inv:
+
+                    break;
+                case R.id.btn_add_to_cart:
+                    // TODO: create utilities to convert double to String according to our UI requirements
+                    double cartItemAmount = CurrencyUtils.stringAmountToDouble(amount.getText().toString());
+                    double cartTotalAmount = CurrencyUtils.stringAmountToDouble(totalAmountTextView.getText().toString());
+                    double newCartTotalAmount = cartTotalAmount + cartItemAmount;
+                    String newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount,
+                            currencyToggle.isChecked() ? CurrencyUtils.CurrencyType.LOCAL : CurrencyUtils.CurrencyType.BTC);
+
+                    // is new amount amount valid?
+                    if(!checkAmountAndDisplayIfError(newCartTotalAmountStr)) {
+                        // valid amount - no error was displayed
+                        int cartItemsCount = Integer.parseInt(totalItemsCountTextView.getText().toString());
+
+                        totalAmountTextView.setText(Double.toString(newCartTotalAmount));
+                        totalItemsCountTextView.setText(Integer.toString(cartItemsCount + 1));
+
+                        // create item and add to cart
+                        Item item = new Item(null, productNameEditText.getText().toString(), "", cartItemAmount , 0, "", true, new Date());
+                        mItemsInCart.add(item);
+
+                        // reset amount and item name
+                        amount.setText("0");
+                        productNameEditText.setText("");
+                    }
+                    break;
+            }
+
         } else {
             // it is a button!
             Button keypad = (Button) v;
@@ -233,16 +291,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                         amount.setText(keypad.getText().toString());
                     } else {
                         String newAmount = amount.getText().toString() + keypad.getText().toString();
-                        int error = checkValidAmount(newAmount);
-                        if (error > 0) {
-                            amount.setText(newAmount);
-                        } else {
-                            if(error == -1) {
-                                Toast.makeText(getContext(), R.string.amount_less_than_10000_message, Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(getContext(), R.string.amount_has_more_decimals_than_allowed, Toast.LENGTH_SHORT).show();
-                            }
-                        }
+                        checkAmountAndDisplayIfError(newAmount);
                     }
                     break;
 
@@ -262,7 +311,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
                         });
                         mesg.show();
-                    } else if(amount.getText().toString().equals("0")) {
+                    } else if(totalAmountTextView.getText().toString().equals("0")) {
                         Toast.makeText(getContext(), R.string.amount_cannot_be_zero, Toast.LENGTH_SHORT).show();
                     } else if(checkIfNetworkConnectionAvailable()) {   // check also displays toast with issue  TODO clean with else clause and simpler check
 
@@ -272,13 +321,13 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                             boolean isPrimaryAmount;
                             if (currencyToggle.isChecked()) {
                                 // was local currency - convert to BTC
-                                primaryAmount = amount.getText().toString(); //+ " " + mLocalCurrency;
-                                secondaryAmount = getBtcFromLocalCurrency(amount.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
+                                primaryAmount = totalAmountTextView.getText().toString(); //+ " " + mLocalCurrency;
+                                secondaryAmount = CurrencyUtils.getBtcFromLocalCurrency(totalAmountTextView.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
                                 isPrimaryAmount = false;
                             } else {
                                 // was BTC - convert to local currency
-                                primaryAmount = amount.getText().toString(); // + " BTC";
-                                secondaryAmount = getLocalCurrencyFromBtc(amount.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+                                primaryAmount = totalAmountTextView.getText().toString(); // + " BTC";
+                                secondaryAmount = CurrencyUtils.getLocalCurrencyFromBtc(totalAmountTextView.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
                                 isPrimaryAmount = true;
                             }
 
@@ -311,64 +360,6 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
     }
 
-    // temporarily returns int to specify the error -- this should be substituted with a proper enum
-    // that ALSO contains the actual strings (from R.string)
-    // Values: -1: GreaterThanAllowedValue, -2: NoMoreDecimalsAllowed
-    private int checkValidAmount(String amount) {
-
-        ExchangeRates exchangeRates = ExchangeRates.getInstance();
-
-        double doubleAmount = Double.parseDouble(amount);
-        if(currencyToggle.isChecked()) {
-            // was local currency
-
-            // allow only 2 decimal digits
-            int dotIndex = amount.indexOf(".");
-            if(dotIndex != -1 && amount.substring(dotIndex).length() > 3)
-                return -2;
-
-            if(exchangeRates.getLastUpdated() != null) {
-                // if equiv amount in BTC should not be more than maxBTCAmount
-                if(doubleAmount / exchangeRates.getBtcToLocalRate() > maxBTCAmount)
-                    return -1;
-            }
-        } else {
-            // was BTC
-
-            // allow only 8 decimal digits
-            int dotIndex = amount.indexOf(".");
-            if(dotIndex != -1 && amount.substring(dotIndex).length() > 9)
-                return -2;
-
-            if(doubleAmount > maxBTCAmount)
-                return -1;
-        }
-
-        return 1;
-    }
-
-    private String getLocalCurrencyFromBtc(String amount) {
-
-        ExchangeRates exchangeRates = ExchangeRates.getInstance();
-
-        double newAmount = Double.parseDouble(amount) * exchangeRates.getBtcToLocalRate();
-        DecimalFormat formatter = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
-        formatter.setRoundingMode( RoundingMode.HALF_UP );
-        return formatter.format(newAmount);
-    }
-
-    private String getBtcFromLocalCurrency(String amount) {
-
-        ExchangeRates exchangeRates = ExchangeRates.getInstance();
-
-        // the following was losing precision at every toggling!!
-        //double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getLocalToBtcRate();
-
-        double newAmount = Double.parseDouble(amount) / exchangeRates.getBtcToLocalRate();
-        DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
-        formatter.setRoundingMode( RoundingMode.HALF_UP );
-        return formatter.format(newAmount);
-    }
 
     private boolean checkIfNetworkConnectionAvailable() {
         if(!Utilities.isNetworkConnectionAvailable(getContext())) {
@@ -379,6 +370,22 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         return true;
     }
 
+
+    private boolean checkAmountAndDisplayIfError(String newAmount) {
+        int error = CurrencyUtils.checkValidAmount(CurrencyUtils.stringAmountToDouble(newAmount),
+                currencyToggle.isChecked() ? CurrencyUtils.CurrencyType.LOCAL : CurrencyUtils.CurrencyType.BTC);
+        if (error > 0) {
+            amount.setText(newAmount);
+            return false;
+        } else {
+            if(error == -1) {
+                Toast.makeText(getContext(), R.string.amount_less_than_10000_message, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), R.string.amount_has_more_decimals_than_allowed, Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+    }
 
     @Override
     public void doWhenFragmentBecomesVisible() {

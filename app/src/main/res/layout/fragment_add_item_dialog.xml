@@ -1,0 +1,30 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layout_margin="8dp"
+    tools:context="gr.cryptocurrencies.bitcoinpos.AddItemDialogFragment">
+
+    <EditText
+        android:id="@+id/item_name_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:maxLines="1"
+        android:maxLength="15"
+        android:hint="@string/item_name" />
+
+    <EditText
+        android:id="@+id/item_price_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:inputType="numberDecimal"
+        android:maxLines="1"
+        android:maxLength="13"
+        android:hint="@string/item_price_currency_agnostic" />
+
+</LinearLayout>

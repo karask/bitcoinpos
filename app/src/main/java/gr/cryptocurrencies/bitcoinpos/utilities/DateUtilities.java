@@ -57,4 +57,26 @@ public class DateUtilities {
         return relativeTimeString;
     }
 
+    public static String getDateAsString(Date date) {
+        DateFormat dbDf = new SimpleDateFormat(DateUtilities.DATABASE_DATE_FORMAT);
+        dbDf.setTimeZone(TimeZone.getTimeZone(DateUtilities.UTC));
+
+        return dbDf.format(date);
+    }
+
+    public static Date getStringAsDate(String date) {
+        DateFormat dbDf = new SimpleDateFormat(DateUtilities.DATABASE_DATE_FORMAT);
+        dbDf.setTimeZone(TimeZone.getTimeZone(DateUtilities.UTC));
+
+        Date dbDate = null;
+        try {
+            dbDate = dbDf.parse(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return dbDate;
+    }
+
+
 }

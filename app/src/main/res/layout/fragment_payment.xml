@@ -20,6 +20,7 @@
             android:orientation="horizontal">
 
             <LinearLayout
+                android:id="@+id/total_items_count_linear_layout"
                 android:layout_width="0px"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -38,6 +39,7 @@
                     android:text="@string/items"/>
 
                 <TextView
+                    android:id="@+id/totalItemsCountTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="0px"
                     android:layout_weight="1"
@@ -67,6 +69,7 @@
                     android:text="@string/total"/>
 
                 <TextView
+                    android:id="@+id/totalAmountTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="0px"
                     android:layout_weight="1"
@@ -290,7 +293,7 @@
                 android:text="0" />
 
             <ImageButton
-                android:id="@+id/btn_add"
+                android:id="@+id/btn_add_to_cart"
                 android:background="@color/numpad_selector"
                 android:layout_width="0px"
                 android:layout_weight="1"

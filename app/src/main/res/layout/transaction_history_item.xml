@@ -9,7 +9,7 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="0dp"
-        android:layout_weight="0.45"
+        android:layout_weight="0.5"
         android:layout_gravity="center"
         android:layout_height="wrap_content">
 
@@ -24,6 +24,7 @@
             android:paddingEnd="10dp"
             android:textAlignment="textEnd"
             android:gravity="end"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:id="@+id/transaction_history_amount"/>
 
         <TextView
@@ -37,6 +38,7 @@
             android:paddingEnd="10dp"
             android:textAlignment="textEnd"
             android:gravity="end"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:id="@+id/transaction_history_btc_amount"/>
 
     </LinearLayout>
@@ -46,9 +48,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="date and time"
-        android:layout_weight="0.5"
+        android:layout_weight="0.45"
         android:padding="10dp"
         android:gravity="center"
+        android:textAppearance="?attr/textAppearanceListItem"
         android:id="@+id/transaction_history_date"/>
 
     <ImageView

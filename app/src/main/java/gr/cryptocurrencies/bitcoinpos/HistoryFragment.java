@@ -29,7 +29,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import gr.cryptocurrencies.bitcoinpos.database.TransactionHistoryDb;
+import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
 import gr.cryptocurrencies.bitcoinpos.network.Requests;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
 import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
@@ -54,7 +54,7 @@ import java.util.List;
  */
 public class HistoryFragment extends ListFragment implements FragmentIsNowVisible, SwipeRefreshLayout.OnRefreshListener {
 
-    private TransactionHistoryDb mDbHelper;
+    private PointOfSaleDb mDbHelper;
     private List<HashMap<String,String>> mTransactionHistoryItemList;
     private SwipeRefreshLayout mSwipeLayout;
 
@@ -142,21 +142,21 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
     private Cursor getTransactionHistoryDbCursor() {
         // get DB helper
-        mDbHelper = TransactionHistoryDb.getInstance(getContext());
+        mDbHelper = PointOfSaleDb.getInstance(getContext());
 
         // Each row in the list stores amount and date of transaction -- retrieves history from DB
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
         // get the following columns:
-        String[] tableColumns = { TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT };
+        String[] tableColumns = { PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT };
 
-        String sortOrder = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
-        Cursor c = db.query(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, tableColumns, null, null, null, null, sortOrder);
+        String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
+        Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, null, null, null, null, sortOrder);
 
         return c;
     }
@@ -170,13 +170,13 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
             do {
                 HashMap<String, String> item = new HashMap<String, String>();
-                //item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID, c.getString(0));
-                item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, c.getString(1) + " " + c.getString(2));
-                item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, c.getString(5) + " BTC");
-                item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT, DateUtilities.getRelativeTimeString(c.getString(3)));
+                //item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID, c.getString(0));
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, c.getString(1) + " " + c.getString(2));
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, c.getString(5) + " BTC");
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT, DateUtilities.getRelativeTimeString(c.getString(3)));
 
                 int isConfirmedImage = "1".equals(c.getString(4)) ? R.drawable.ic_tick_green_24dp : R.drawable.ic_warning_orange_24dp;
-                item.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, Integer.toString(isConfirmedImage));
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, Integer.toString(isConfirmedImage));
 
                 mTransactionHistoryItemList.add(item);
             } while (c.moveToNext());
@@ -189,10 +189,10 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     private void updateTransactionHistoryView() {
         // define key strings in hashmap
         String[] from = {
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED
+                PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED
         };
 
         // define ids of view in list view fragment to bind to
@@ -260,15 +260,15 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     private boolean updateTransactionToConfirmed(String txId, String confirmedAt) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, true);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
+        values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, true);
+        values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
 
         // row to update
-        String selection = TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID + " LIKE ?";
+        String selection = PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID + " LIKE ?";
         String[] selectioinArgs = {String.valueOf(txId) };
 
 
-        int count = db.update(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, values, selection, selectioinArgs);
+        int count = db.update(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, values, selection, selectioinArgs);
         if(count > 0)
             return true;
         else
@@ -315,30 +315,30 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
     private Cursor getTransactionHistoryInRangeCursor(int startYear, int startMonth, int endYear, int endMonth) {
         // get DB helper
-        mDbHelper = TransactionHistoryDb.getInstance(getContext());
+        mDbHelper = PointOfSaleDb.getInstance(getContext());
 
         // Each row in the list stores amount and date of transaction -- retrieves history from DB
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
         // get the following columns:
-        String[] tableColumns = { TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_PRODUCT_NAME,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE };
+        String[] tableColumns = { PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_MERCHANT_NAME,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_PRODUCT_NAME,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE };
 
         String paddedStartMonth = String.format("%02d", mStartMonth +1); // +1 since index starts from 0
         String paddedEndMonth = String.format("%02d", mEndMonth +1 +1);  // 2nd +1 for sql <= text comparison
-        String whereClause = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " >= '" + mStartYear + "-" + paddedStartMonth + "' and " +
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= '" + mEndYear + "-" + paddedEndMonth + "' and " +
-                TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED + " = 1";
+        String whereClause = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " >= '" + mStartYear + "-" + paddedStartMonth + "' and " +
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= '" + mEndYear + "-" + paddedEndMonth + "' and " +
+                PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED + " = 1";
 
-        String sortOrder = TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
-        Cursor c = db.query(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, null, null, null, sortOrder);
+        String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
+        Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, null, null, null, sortOrder);
 
         return c;
     }

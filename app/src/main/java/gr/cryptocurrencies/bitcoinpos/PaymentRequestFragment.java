@@ -24,7 +24,8 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import gr.cryptocurrencies.bitcoinpos.database.TransactionHistoryDb;
+
+import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
 import gr.cryptocurrencies.bitcoinpos.network.Requests;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
 
@@ -82,7 +83,7 @@ public class PaymentRequestFragment extends DialogFragment  {
     private Timer mTimer;
     private String mPaymentTransaction = null;
 
-    private TransactionHistoryDb mDbHelper;
+    private PointOfSaleDb mDbHelper;
 
     private OnFragmentInteractionListener mListener;
 
@@ -221,7 +222,7 @@ public class PaymentRequestFragment extends DialogFragment  {
     public void onActivityCreated(Bundle savedInstanceState) {
 
         // get DB helper
-        mDbHelper = TransactionHistoryDb.getInstance(getContext());
+        mDbHelper = PointOfSaleDb.getInstance(getContext());
 
         // setup timer to check network for unconfirmed/confirmed transactions
         mTimer = new Timer();
@@ -491,40 +492,40 @@ public class PaymentRequestFragment extends DialogFragment  {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         // make sure transaction entry does not already exist:
-        String[] tableColumns = { TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID };
-        String whereClause = TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID + " = ?";
+        String[] tableColumns = { PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID };
+        String whereClause = PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID + " = ?";
         String[] whereArgs = { txId };
-        Cursor c = db.query(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, whereArgs, null, null, null);
+        Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, whereArgs, null, null, null);
 
         // if no row found with that txId add the transaction
         if(c != null && c.getCount() == 0) {
             ContentValues values = new ContentValues();
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID, txId);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btcAmount);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, localAmount);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY, localCurrency);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CREATED_AT, createdAt);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_PRODUCT_NAME, productName);
-            values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE, exchangeRate);
-            db.insert(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, null, values);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID, txId);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btcAmount);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, localAmount);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY, localCurrency);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT, createdAt);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_PRODUCT_NAME, productName);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE, exchangeRate);
+            db.insert(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, null, values);
         }
     }
 
     private void updateTransactionToConfirmed(String txId, String confirmedAt) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, true);
-        values.put(TransactionHistoryDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
+        values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, true);
+        values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
 
         // row to update
-        String selection = TransactionHistoryDb.TRANSACTIONS_COLUMN_TX_ID + " LIKE ?";
+        String selection = PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID + " LIKE ?";
         String[] selectioinArgs = {String.valueOf(txId) };
 
-        int count = db.update(TransactionHistoryDb.TRANSACTIONS_TABLE_NAME, values, selection, selectioinArgs);
+        int count = db.update(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, values, selection, selectioinArgs);
     }
 
 
