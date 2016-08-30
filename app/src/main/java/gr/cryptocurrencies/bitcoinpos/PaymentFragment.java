@@ -177,11 +177,11 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
             productNameEditText.setCursorVisible(true);
         } else if(v instanceof LinearLayout) {
             if(mItemsInCart.size() > 0) {
-//                // only one clickable linear layout (items counter)
-//                DialogFragment myDialog = ShowItemListFragment.newInstance(ShowItemListFragment.DialogType.SHOW_CART_LIST_ITEMS.name(), mItemsInCart);
-//                // for API >= 23 the title is disable by default -- we set a style that enables it
-//                myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.ShowItemListDialogFragment);
-//                myDialog.show(getFragmentManager(), getString(R.string.item_action_list_dialog_fragment_tag));
+                // only one clickable linear layout (items counter)
+                DialogFragment myDialog = ShowItemFragment.newInstance(1, ShowItemFragment.DialogType.SHOW_CART_ITEMS_LIST, mItemsInCart);
+                // for API >= 23 the title is disable by default -- we set a style that enables it
+                myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.ShowItemDialogFragment);
+                myDialog.show(getFragmentManager(), getString(R.string.show_item_list_dialog_fragment_tag));
             }
         } else if(v instanceof ToggleButton) {
             // only one toggle button: currency converter

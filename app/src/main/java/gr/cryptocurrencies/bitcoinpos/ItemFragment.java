@@ -60,7 +60,6 @@ public class ItemFragment extends Fragment implements FragmentIsNowVisible {
     }
 
 
-    // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
     public static ItemFragment newInstance(int columnCount) {
         ItemFragment fragment = new ItemFragment();

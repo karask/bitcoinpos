@@ -49,8 +49,8 @@
         <item name="android:windowNoTitle">false</item>
     </style>
 
-    <!-- Dialog Fragment (Show Item List) -->
-    <style name="ShowItemListDialogFragment" parent="@style/Theme.AppCompat.Light.Dialog">
+    <!-- Dialog Fragment (Show Item ) -->
+    <style name="ShowItemDialogFragment" parent="@style/Theme.AppCompat.Light.Dialog">
         <item name="android:windowNoTitle">false</item>
     </style>
 </resources>

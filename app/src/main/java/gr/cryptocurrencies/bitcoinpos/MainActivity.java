@@ -26,7 +26,8 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
                                                                AboutFragment.OnFragmentInteractionListener,
                                                                ItemFragment.OnFragmentInteractionListener,
                                                                AddItemDialogFragment.OnFragmentInteractionListener,
-                                                               ItemActionListFragment.OnFragmentInteractionListener {
+                                                               ItemActionListFragment.OnFragmentInteractionListener,
+                                                               ShowItemFragment.OnListFragmentInteractionListener {
 
     private Toolbar mToolbar;
     private TabLayout mTabLayout;
@@ -295,4 +296,19 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     }
 
 
+    @Override
+    // from ShowItemFragment  (select from inventory mode)
+    public void onShowItemSelectionFragmentInteraction(Item item) {
+        // ...
+    }
+
+    @Override
+    // from ShowItemFragment  (show cart mode)
+    public void onClearCartFragmentInteraction() {
+        // get PaymentFragment view and clear cart and update UI
+        PaymentFragment paymentFragment = (PaymentFragment) mViewPagerAdapter.instantiateItem(null, 1);
+        paymentFragment.mItemsInCart.clear();
+        paymentFragment.totalItemsCountTextView.setText("0");
+        paymentFragment.totalAmountTextView.setText("0");
+    }
 }

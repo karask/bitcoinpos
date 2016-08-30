@@ -42,6 +42,7 @@
     <string name="about_fragment_tag" translatable="false">about_fragment_tag</string>
     <string name="add_item_dialog_fragment_tag" translatable="false">add_item_dialog_fragment_tag</string>
     <string name="item_action_list_dialog_fragment_tag" translatable="false">item_action_list_dialog_fragment_tag</string>
+    <string name="show_item_list_dialog_fragment_tag" translatable="false">show_item_list_dialog_fragment_tag</string>
 
     <string name="payment_text">Payment:</string>
     <string name="payment_pending">Pending</string>
