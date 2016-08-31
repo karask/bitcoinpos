@@ -26,6 +26,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import gr.cryptocurrencies.bitcoinpos.database.Item;
+import gr.cryptocurrencies.bitcoinpos.database.ItemHelper;
 import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
 import gr.cryptocurrencies.bitcoinpos.network.Utilities;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
@@ -185,41 +186,51 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
             }
         } else if(v instanceof ToggleButton) {
             // only one toggle button: currency converter
-            final ToggleButton  currencyToggle = (ToggleButton) v;
-            String currentAmount = totalAmountTextView.getText().toString();
-            ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
-            if(exchangeRates.getLastUpdated() != null) {
-                if(currentAmount != "0") {
-                    if (!currencyToggle.isChecked()) {
-                        // was local currency - convert to BTC
-                        totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
+            if(mItemsInCart.size() == 0) {
+                final ToggleButton currencyToggle = (ToggleButton) v;
+                String currentAmount = totalAmountTextView.getText().toString();
+                ExchangeRates exchangeRates = ExchangeRates.getInstance();
+
+                if (exchangeRates.getLastUpdated() != null) {
+                    if (currentAmount != "0") {
+                        if (!currencyToggle.isChecked()) {
+                            // was local currency - convert to BTC
+                            totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
+                        } else {
+                            // was BTC - convert to local currency
+                            totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
+                        }
+                    }
+                } else {
+                    // toggle failed -- toggle programmatically to revert
+                    currencyToggle.toggle();
+
+                    // checks network connection and then displays message with retry
+                    if (!Utilities.isNetworkConnectionAvailable(getContext())) {
+                        Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
+                                .setAction(R.string.retry, new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        currencyToggle.performClick();
+                                    }
+
+                                });
+                        mesg.show();
                     } else {
-                        // was BTC - convert to local currency
-                        totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
+                        // attempt to get exchange rates again
+                        exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+                        Toast.makeText(getContext(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
                     }
                 }
             } else {
-                // toggle failed -- toggle programmatically to revert
+                // item was already addedff
+                Toast.makeText(getContext(), R.string.all_items_same_currency, Toast.LENGTH_LONG).show();
+
+                // toggle not allowed -- toggle programmatically to revert
                 currencyToggle.toggle();
-
-                // checks network connection and then displays message with retry
-                if(!Utilities.isNetworkConnectionAvailable(getContext())) {
-                    Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
-                            .setAction(R.string.retry, new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    currencyToggle.performClick();
-                                }
-
-                            });
-                    mesg.show();
-                } else {
-                    // attempt to get exchange rates again
-                    exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
-                    Toast.makeText(getContext(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
-                }
             }
+
         } else if(v instanceof ImageButton) {
             ImageButton imageButton = (ImageButton) v;
             switch (imageButton.getId()) {
@@ -237,31 +248,49 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     productNameEditText.setText("");
                     break;
                 case R.id.btn_inv:
-
+                    // check if Items db is empty
+                    ItemHelper itemHelper = ItemHelper.getInstance(getContext());
+                    List<Item> allItems = itemHelper.getAll();
+                    if(allItems.size() > 0) {
+                        DialogFragment myDialog = ShowItemFragment.newInstance(1, ShowItemFragment.DialogType.SELECT_ITEM_LIST, allItems);
+                        // for API >= 23 the title is disable by default -- we set a style that enables it
+                        myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.ShowItemDialogFragment);
+                        myDialog.show(getFragmentManager(), getString(R.string.show_item_list_dialog_fragment_tag));
+                    } else {
+                        Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.no_items_yet, Snackbar.LENGTH_LONG)
+                                .setAction(getString(R.string.items), new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        ((MainActivity) getActivity()).getmViewPager().setCurrentItem(0);
+                                    }
+                                });
+                        mesg.show();
+                    }
                     break;
                 case R.id.btn_add_to_cart:
-                    // TODO: create utilities to convert double to String according to our UI requirements
-                    double cartItemAmount = CurrencyUtils.stringAmountToDouble(amount.getText().toString());
-                    double cartTotalAmount = CurrencyUtils.stringAmountToDouble(totalAmountTextView.getText().toString());
-                    double newCartTotalAmount = cartTotalAmount + cartItemAmount;
-                    String newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount,
-                            currencyToggle.isChecked() ? CurrencyUtils.CurrencyType.LOCAL : CurrencyUtils.CurrencyType.BTC);
+                    if(Double.parseDouble(amount.getText().toString()) != 0) {
+                        double cartItemAmount = CurrencyUtils.stringAmountToDouble(amount.getText().toString());
+                        double cartTotalAmount = CurrencyUtils.stringAmountToDouble(totalAmountTextView.getText().toString());
+                        double newCartTotalAmount = cartTotalAmount + cartItemAmount;
+                        String newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount,
+                                currencyToggle.isChecked() ? CurrencyUtils.CurrencyType.LOCAL : CurrencyUtils.CurrencyType.BTC);
 
-                    // is new amount amount valid?
-                    if(!checkAmountAndDisplayIfError(newCartTotalAmountStr)) {
-                        // valid amount - no error was displayed
-                        int cartItemsCount = Integer.parseInt(totalItemsCountTextView.getText().toString());
+                        // is new amount amount valid?
+                        if (!checkAmountAndDisplayIfError(newCartTotalAmountStr)) {
+                            // valid amount - no error was displayed
+                            int cartItemsCount = Integer.parseInt(totalItemsCountTextView.getText().toString());
 
-                        totalAmountTextView.setText(Double.toString(newCartTotalAmount));
-                        totalItemsCountTextView.setText(Integer.toString(cartItemsCount + 1));
+                            totalAmountTextView.setText(Double.toString(newCartTotalAmount));
+                            totalItemsCountTextView.setText(Integer.toString(cartItemsCount + 1));
 
-                        // create item and add to cart
-                        Item item = new Item(null, productNameEditText.getText().toString(), "", cartItemAmount , 0, "", true, new Date());
-                        mItemsInCart.add(item);
+                            // create item and add to cart
+                            Item item = new Item(null, productNameEditText.getText().toString(), "", cartItemAmount, 0, "", true, new Date());
+                            mItemsInCart.add(item);
 
-                        // reset amount and item name
-                        amount.setText("0");
-                        productNameEditText.setText("");
+                            // reset amount and item name
+                            amount.setText("0");
+                            productNameEditText.setText("");
+                        }
                     }
                     break;
             }
@@ -332,7 +361,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                             }
 
                             DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount,
-                                    secondaryAmount, isPrimaryAmount, mLocalCurrency, String.valueOf(exchangeRates.getBtcToLocalRate()));
+                                    secondaryAmount, isPrimaryAmount, mLocalCurrency, String.valueOf(exchangeRates.getBtcToLocalRate()), convertCartItemsToString(mItemsInCart));
                             // for API >= 23 the title is disable by default -- we set a style that enables it
                             myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
                             myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));
@@ -358,6 +387,17 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         }
 
 
+    }
+
+    private String convertCartItemsToString(List<Item> mItemsInCart) {
+        // TODO: put separator in a GenericUtils class ?
+        StringBuilder idsStr = new StringBuilder();
+        for(int i = 0; i < mItemsInCart.size(); i++) {
+            if(i > 0)
+                idsStr.append("[~|~]");
+            idsStr.append(mItemsInCart.get(i).toString());
+        }
+        return idsStr.toString();
     }
 
 

@@ -187,6 +187,8 @@
 
     <string name="cart">Cart</string>
     <string name="remove_all">Remove all</string>
+    <string name="choose_item">Choose an item</string>
+    <string name="all_items_same_currency">Currently, all cart items need to be in the same currency</string>
 
 
 </resources>

@@ -72,9 +72,11 @@ public class ShowItemFragment extends DialogFragment {
                 // get from arguments
                 mItemList = getArguments().getParcelableArrayList(ARG_ITEM_LIST);
             } else {       // DialogType.SELECT_ITEM_LIST
-                // get all items from DB
-                ItemHelper itemHelper = ItemHelper.getInstance(getContext());
-                mItemList = itemHelper.getAll();
+                // the items db is passed as well now
+                mItemList = getArguments().getParcelableArrayList(ARG_ITEM_LIST);
+//                // get all items from DB
+//                ItemHelper itemHelper = ItemHelper.getInstance(getContext());
+//                mItemList = itemHelper.getAll();
             }
 
         }
@@ -89,24 +91,37 @@ public class ShowItemFragment extends DialogFragment {
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.list);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-                .setTitle(getString(R.string.cart));
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-        builder.setNegativeButton(getString(R.string.remove_all),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mListener.onClearCartFragmentInteraction();
-                    }
-                });
-        builder.setPositiveButton(getString(R.string.ok),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dismiss();
-                    }
-                });
+        if(mDialogType == DialogType.SHOW_CART_ITEMS_LIST) {
+            builder.setTitle(getString(R.string.cart));
 
+            builder.setNegativeButton(getString(R.string.remove_all),
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mListener.onClearCartFragmentInteraction();
+                        }
+                    });
+
+            builder.setPositiveButton(getString(R.string.ok),
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dismiss();
+                        }
+                    });
+        } else {
+            builder.setTitle(getString(R.string.choose_item));
+
+            builder.setPositiveButton(getString(R.string.cancel),
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dismiss();
+                        }
+                    });
+        }
 
         // Set the adapter
         if (view instanceof RecyclerView) {

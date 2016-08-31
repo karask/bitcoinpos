@@ -59,6 +59,7 @@ public class PaymentRequestFragment extends DialogFragment  {
     private static final String ARG_BITCOIN_IS_PRIMARY = "bitcoinIsPrimary";
     private static final String ARG_LOCAL_CURRENCY = "localCurrency";
     private static final String ARG_EXCHANGE_RATE = "exchangeRate";
+    private static final String ARG_ITEMS_NAMES = "itemsNames";
 
     private String mBitcoinAddress;
     private String mMerchantName;
@@ -67,6 +68,7 @@ public class PaymentRequestFragment extends DialogFragment  {
     private boolean mBitcoinIsPrimary;
     private String mLocalCurrency;
     private String mExchangeRate;
+    private String mItemsNames;
 
     private ImageView mQrCodeImage;
     private Bitmap mQrCodeBitmap;
@@ -102,10 +104,11 @@ public class PaymentRequestFragment extends DialogFragment  {
      * @param bitcoinIsPrimary
      * @param localCurrency
      * @param exchangeRate
+     * @param itemsNames
      * @return A new instance of fragment PaymentRequestFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount, boolean bitcoinIsPrimary, String localCurrency, String exchangeRate) {
+    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount, boolean bitcoinIsPrimary, String localCurrency, String exchangeRate, String itemsNames) {
         PaymentRequestFragment fragment = new PaymentRequestFragment();
         Bundle args = new Bundle();
         args.putString(ARG_BITCOIN_ADDRESS, bitcoinAddress);
@@ -115,6 +118,7 @@ public class PaymentRequestFragment extends DialogFragment  {
         args.putBoolean(ARG_BITCOIN_IS_PRIMARY, bitcoinIsPrimary);
         args.putString(ARG_LOCAL_CURRENCY, localCurrency);
         args.putString(ARG_EXCHANGE_RATE, exchangeRate);
+        args.putString(ARG_ITEMS_NAMES, itemsNames);
         fragment.setArguments(args);
         return fragment;
     }
@@ -131,6 +135,7 @@ public class PaymentRequestFragment extends DialogFragment  {
             mBitcoinIsPrimary = getArguments().getBoolean(ARG_BITCOIN_IS_PRIMARY);
             mLocalCurrency = getArguments().getString(ARG_LOCAL_CURRENCY);
             mExchangeRate = getArguments().getString(ARG_EXCHANGE_RATE);
+            mItemsNames = getArguments().getString(ARG_ITEMS_NAMES);
 
             //Find screen size
             WindowManager manager = (WindowManager) getActivity().getSystemService(getContext().WINDOW_SERVICE);
@@ -408,7 +413,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                                             }
 
                                             addTransaction(mPaymentTransaction, btcAmount, localAmount, mLocalCurrency,
-                                                    createdAt, null, mMerchantName, mBitcoinAddress, false, null, mExchangeRate);
+                                                    createdAt, null, mMerchantName, mBitcoinAddress, false, mItemsNames, mExchangeRate);
                                         }
                                     }
                                 }
@@ -487,7 +492,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                                 double localAmount, String localCurrency,
                                 String createdAt, String confirmedAt,
                                 String merchantName, String bitcoinAddress,
-                                boolean isConfirmed, String productName,
+                                boolean isConfirmed, String itemsNames,
                                 String exchangeRate) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
@@ -509,7 +514,7 @@ public class PaymentRequestFragment extends DialogFragment  {
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, isConfirmed);
-            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_PRODUCT_NAME, productName);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_PRODUCT_NAME, itemsNames);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE, exchangeRate);
             db.insert(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, null, values);
         }

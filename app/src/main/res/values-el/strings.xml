@@ -164,5 +164,7 @@
     <string name="update">Ενημέρωση</string>
     <string name="cart">Καλάθι</string>
     <string name="remove_all">Αφαίρεση όλων</string>
+    <string name="choose_item">Επιλέξτε ένα είδος</string>
+    <string name="all_items_same_currency">Προς το παρόν, όλα τα είδη στο καλάθι πρέπει να είναι στο ίδιο νόμισμα</string>
 
 </resources>

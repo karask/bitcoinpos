@@ -154,4 +154,10 @@ public class Item implements Parcelable {
             return new Item[size];
         }
     };
+
+    // currently only keeps item's name and amount
+    // TODO: put separator in a GenericUtils class ?
+    public String toString() {
+        return name + "[-|-]" + amount;
+    }
 }

@@ -34,6 +34,10 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     private ViewPager mViewPager;
     private ViewPagerAdapter mViewPagerAdapter;
 
+    public ViewPager getmViewPager() {
+        return mViewPager;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -299,7 +303,15 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     @Override
     // from ShowItemFragment  (select from inventory mode)
     public void onShowItemSelectionFragmentInteraction(Item item) {
-        // ...
+        // get PaymentFragment view and clear cart and update UI
+        PaymentFragment paymentFragment = (PaymentFragment) mViewPagerAdapter.instantiateItem(null, 1);
+
+        // close ShowItemFragment
+        getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentByTag(getString(R.string.show_item_list_dialog_fragment_tag))).commit();
+
+        // update PaymentFragment edit texts
+        paymentFragment.productNameEditText.setText(item.getName());
+        paymentFragment.amount.setText(String.valueOf(item.getAmount()));
     }
 
     @Override
