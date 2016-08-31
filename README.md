@@ -1,6 +1,6 @@
 
 # Introduction
-This is a simple Bitconi Point of Sale application for android devices. It can easily be customized to support specific merchant items.
+This is a simple Bitcoin Point of Sale application for android devices. It supports pre-set items.
 
 It currently supports the following languages: English and Greek.
 
@@ -28,4 +28,3 @@ If you are using another currency please contact me and I will add the currency 
 * Test with HD addresses
 * Clean code 
 * Add NFC support
-* Add specific items support
