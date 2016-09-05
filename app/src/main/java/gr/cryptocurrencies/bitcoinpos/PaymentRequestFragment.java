@@ -161,6 +161,7 @@ public class PaymentRequestFragment extends DialogFragment  {
             } catch (WriterException e) {
                 e.printStackTrace();
             }
+            
         }
     }
 
@@ -213,7 +214,7 @@ public class PaymentRequestFragment extends DialogFragment  {
             @Override
             public void onClick(View v) {
                 // call parents method to close dialog fragment
-                mListener.onPaymentCancellation();
+                mListener.onPaymentRequestFragmentClose(true);
             }
         });
 
@@ -289,7 +290,7 @@ public class PaymentRequestFragment extends DialogFragment  {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onPaymentCancellation();
+        void onPaymentRequestFragmentClose(boolean isCancelled);
     }
 
 
@@ -397,8 +398,18 @@ public class PaymentRequestFragment extends DialogFragment  {
                                             mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
                                             mPaymentStatusTextView.setText(R.string.payment_unconfirmed);
 
-                                            // update cancel button
+                                            // update cancel button and listener
                                             mCancelButton.setText(R.string.ok);
+                                            mCancelButton.setOnClickListener(new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View v) {
+                                                    // stop timer that would check if transaction was confirmed
+                                                    mTimer.cancel();
+
+                                                    // call parents method to close dialog fragment
+                                                    mListener.onPaymentRequestFragmentClose(false);
+                                                }
+                                            });
 
                                             // payment is now visible to the network / write to transaction history
                                             String createdAt = txObj.getString("time_utc");
@@ -467,7 +478,7 @@ public class PaymentRequestFragment extends DialogFragment  {
 
                                     // transaction was confirmed / update transaction history
                                     String confirmedAt = response.getJSONObject("data").getString("time_utc");
-                                    updateTransactionToConfirmed(tx, confirmedAt);
+                                    updateDbTransactionToConfirmed(tx, confirmedAt);
                                 }
                             }
                         } catch (JSONException e) {
@@ -520,7 +531,7 @@ public class PaymentRequestFragment extends DialogFragment  {
         }
     }
 
-    private void updateTransactionToConfirmed(String txId, String confirmedAt) {
+    private void updateDbTransactionToConfirmed(String txId, String confirmedAt) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, true);

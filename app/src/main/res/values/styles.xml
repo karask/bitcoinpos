@@ -32,6 +32,7 @@
     <!-- Dialog Fragment (Request Payment) -->
     <style name="RequestPaymentDialogFragment" parent="@style/Theme.AppCompat.Light.Dialog">
         <item name="android:windowNoTitle">true</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
     </style>
 
     <!-- Dialog Fragment (About) -->

@@ -48,9 +48,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
     ImageButton keypadBackspace, keypadInventory, keypadClear, keypadAddToCart;
     Button requestPayment;
     ToggleButton currencyToggle;
-    TextView amount;
-    TextView totalAmountTextView;
-    TextView totalItemsCountTextView;
+    TextView amount, totalAmountTextView, totalItemsCountTextView, totalSecondaryAmountTextView;
 
     SharedPreferences mSharedPreferences;
     String mLocalCurrency;
@@ -87,15 +85,21 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         totalItemsCountLinearLayout = (LinearLayout) fragmentView.findViewById(R.id.total_items_count_linear_layout);
         totalItemsCountLinearLayout.setOnClickListener(this);
 
-        amount = (TextView) fragmentView.findViewById(R.id.amountTextView);
-        totalAmountTextView = (TextView) fragmentView.findViewById(R.id.totalAmountTextView);
-        totalItemsCountTextView = (TextView) fragmentView.findViewById(R.id.totalItemsCountTextView);
-
         currencyToggle = (ToggleButton) fragmentView.findViewById(R.id.currencyToggleButton);
         currencyToggle.setTextOff("BTC");
         currencyToggle.setTextOn(mLocalCurrency);
         currencyToggle.toggle();
         currencyToggle.setOnClickListener(this);
+
+        amount = (TextView) fragmentView.findViewById(R.id.amountTextView);
+        totalAmountTextView = (TextView) fragmentView.findViewById(R.id.totalAmountTextView);
+        totalItemsCountTextView = (TextView) fragmentView.findViewById(R.id.totalItemsCountTextView);
+        totalSecondaryAmountTextView = (TextView) fragmentView.findViewById(R.id.totalSecondaryAmountTextView);
+        if(currencyToggle.isChecked()) {
+            totalSecondaryAmountTextView.setText("0 BTC");
+        } else {
+            totalSecondaryAmountTextView.setText("0 " + mLocalCurrency.toString());
+        }
 
         productNameEditText = (EditText) fragmentView.findViewById(R.id.productNameTextView);
         productNameEditText.setOnClickListener(this);
@@ -193,15 +197,17 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
                 if (exchangeRates.getLastUpdated() != null) {
-                    if (currentAmount != "0") {
+                    //if (currentAmount != "0") {
                         if (!currencyToggle.isChecked()) {
                             // was local currency - convert to BTC
                             totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
+                            totalSecondaryAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount) + " " + mLocalCurrency);
                         } else {
                             // was BTC - convert to local currency
                             totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
+                            totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount) + " BTC");
                         }
-                    }
+                    //}
                 } else {
                     // toggle failed -- toggle programmatically to revert
                     currencyToggle.toggle();
@@ -224,7 +230,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     }
                 }
             } else {
-                // item was already addedff
+                // item was already added and cannot have a different currency of another item
                 Toast.makeText(getContext(), R.string.all_items_same_currency, Toast.LENGTH_LONG).show();
 
                 // toggle not allowed -- toggle programmatically to revert
@@ -272,16 +278,24 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                         double cartItemAmount = CurrencyUtils.stringAmountToDouble(amount.getText().toString());
                         double cartTotalAmount = CurrencyUtils.stringAmountToDouble(totalAmountTextView.getText().toString());
                         double newCartTotalAmount = cartTotalAmount + cartItemAmount;
-                        String newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount,
-                                currencyToggle.isChecked() ? CurrencyUtils.CurrencyType.LOCAL : CurrencyUtils.CurrencyType.BTC);
+                        String newCartTotalAmountStr, newCartSecondaryTotalAmountStr;
+                        if(currencyToggle.isChecked()) {
+                            newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.LOCAL);
+                            newCartSecondaryTotalAmountStr = CurrencyUtils.getBtcFromLocalCurrency(newCartTotalAmountStr) + " BTC";
+                        } else {
+                            newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.BTC);
+                            newCartSecondaryTotalAmountStr = CurrencyUtils.getLocalCurrencyFromBtc(newCartTotalAmountStr) + " " + mLocalCurrency;
+                        }
+
 
                         // is new amount amount valid?
                         if (!checkAmountAndDisplayIfError(newCartTotalAmountStr)) {
                             // valid amount - no error was displayed
                             int cartItemsCount = Integer.parseInt(totalItemsCountTextView.getText().toString());
 
-                            totalAmountTextView.setText(Double.toString(newCartTotalAmount));
+                            totalAmountTextView.setText(newCartTotalAmountStr);
                             totalItemsCountTextView.setText(Integer.toString(cartItemsCount + 1));
+                            totalSecondaryAmountTextView.setText(newCartSecondaryTotalAmountStr);
 
                             // create item and add to cart
                             Item item = new Item(null, productNameEditText.getText().toString(), "", cartItemAmount, 0, "", true, new Date());

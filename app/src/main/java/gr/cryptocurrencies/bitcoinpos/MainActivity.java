@@ -3,24 +3,20 @@ package gr.cryptocurrencies.bitcoinpos;
 import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import java.util.Date;
-import java.util.List;
 
 import gr.cryptocurrencies.bitcoinpos.database.Item;
 import gr.cryptocurrencies.bitcoinpos.database.ItemHelper;
+import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 
 public class MainActivity extends AppCompatActivity implements PaymentRequestFragment.OnFragmentInteractionListener,
                                                                AboutFragment.OnFragmentInteractionListener,
@@ -185,8 +181,27 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
 
 
     // implements PaymentRequestFragment inner interface methods -- from PaymentRequestFragment
-    public void onPaymentCancellation() {
-        // close dialog fragment
+    public void onPaymentRequestFragmentClose(boolean isCancelled) {
+        // get PaymentFragment view and update secondary amount since exchange rate might be different!
+        PaymentFragment paymentFragment = (PaymentFragment) mViewPagerAdapter.instantiateItem(null, 1);
+
+        if(isCancelled) {
+            if (!paymentFragment.currencyToggle.isChecked()) {
+                // was local currency - convert to BTC
+                paymentFragment.totalSecondaryAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(paymentFragment.totalAmountTextView.getText().toString()) + " " + paymentFragment.mLocalCurrency);
+            } else {
+                // was BTC - convert to local currency
+                paymentFragment.totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(paymentFragment.totalAmountTextView.getText().toString()) + " BTC");
+            }
+        } else {
+            // TODO abstract -- duplicated in onClearCartFragmentInteraction below
+            paymentFragment.mItemsInCart.clear();
+            paymentFragment.totalItemsCountTextView.setText("0");
+            paymentFragment.totalAmountTextView.setText("0");
+            paymentFragment.totalSecondaryAmountTextView.setText("0 " + (paymentFragment.currencyToggle.isChecked() ? "BTC" : paymentFragment.mLocalCurrency));
+        }
+
+        // close dialog fragment (from Cancel or OK)
         getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentByTag(getString(R.string.request_payment_fragment_tag))).commit();
     }
 
@@ -319,8 +334,10 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     public void onClearCartFragmentInteraction() {
         // get PaymentFragment view and clear cart and update UI
         PaymentFragment paymentFragment = (PaymentFragment) mViewPagerAdapter.instantiateItem(null, 1);
+        // TODO abstract -- duplicated in onPaymentRequestFragmentClose above
         paymentFragment.mItemsInCart.clear();
         paymentFragment.totalItemsCountTextView.setText("0");
         paymentFragment.totalAmountTextView.setText("0");
+        paymentFragment.totalSecondaryAmountTextView.setText("0 " + (paymentFragment.currencyToggle.isChecked() ? "BTC" : paymentFragment.mLocalCurrency));
     }
 }

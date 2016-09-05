@@ -34,6 +34,7 @@ public class CurrencyUtils {
         return formatter.format(amount);
     }
 
+    // TODO: use doubleAmountToString for cleaner code
     public static String getLocalCurrencyFromBtc(String amount) {
 
         ExchangeRates exchangeRates = ExchangeRates.getInstance();
@@ -44,6 +45,7 @@ public class CurrencyUtils {
         return formatter.format(newAmount);
     }
 
+    // TODO: use doubleAmountToString for cleaner code
     public static String getBtcFromLocalCurrency(String amount) {
 
         ExchangeRates exchangeRates = ExchangeRates.getInstance();

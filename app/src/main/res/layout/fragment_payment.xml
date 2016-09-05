@@ -36,7 +36,7 @@
                     android:textAppearance="?android:attr/textAppearanceLarge"
                     android:gravity="bottom"
                     android:textColor="@color/colorPrimaryDark"
-                    android:text="@string/items"/>
+                    android:text="@string/cart"/>
 
                 <TextView
                     android:id="@+id/totalItemsCountTextView"
@@ -64,7 +64,7 @@
                     android:layout_weight="1"
                     android:layout_gravity="center"
                     android:textAppearance="?android:attr/textAppearanceLarge"
-                    android:gravity="bottom"
+                    android:layout_marginTop="8dp"
                     android:textColor="@color/colorPrimaryDark"
                     android:text="@string/total"/>
 
@@ -75,10 +75,17 @@
                     android:layout_weight="1"
                     android:layout_gravity="center"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:gravity="top"
                     android:textColor="@android:color/black"
                     android:text="0"/>
 
+                <TextView
+                    android:id="@+id/totalSecondaryAmountTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0px"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="0"/>
             </LinearLayout>
 
 
