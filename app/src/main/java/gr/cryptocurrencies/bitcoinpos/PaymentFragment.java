@@ -197,24 +197,24 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
                 if (exchangeRates.getLastUpdated() != null) {
-                    //if (currentAmount != "0") {
-                        if (!currencyToggle.isChecked()) {
-                            // was local currency - convert to BTC
-                            totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
-                            totalSecondaryAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount) + " " + mLocalCurrency);
-                        } else {
-                            // was BTC - convert to local currency
-                            totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
-                            totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount) + " BTC");
-                        }
-                    //}
+                    if (!currencyToggle.isChecked()) {
+                        // TODO since no items and amount is 0 these conversions are useless for now
+                        // was local currency - convert to BTC
+                        totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
+                        totalSecondaryAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount) + " " + mLocalCurrency);
+                    } else {
+                        // TODO since no items and amount is 0 these conversions are useless for now
+                        // was BTC - convert to local currency
+                        totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
+                        totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount) + " BTC");
+                    }
                 } else {
                     // toggle failed -- toggle programmatically to revert
                     currencyToggle.toggle();
 
                     // checks network connection and then displays message with retry
                     if (!Utilities.isNetworkConnectionAvailable(getContext())) {
-                        Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
+                        Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_LONG)
                                 .setAction(R.string.retry, new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
@@ -231,7 +231,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 }
             } else {
                 // item was already added and cannot have a different currency of another item
-                Toast.makeText(getContext(), R.string.all_items_same_currency, Toast.LENGTH_LONG).show();
+                Snackbar.make(coordinatorLayout, R.string.all_items_same_currency, Snackbar.LENGTH_LONG).show();
+                //Toast.makeText(getContext(), R.string.all_items_same_currency, Toast.LENGTH_LONG).show();
 
                 // toggle not allowed -- toggle programmatically to revert
                 currencyToggle.toggle();
@@ -344,7 +345,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
 
                     if (mBitcoinPaymentAddress.isEmpty() || !BitcoinUtils.validateAddress(mBitcoinPaymentAddress)) {
-                        Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_bitcoin_address_message, Snackbar.LENGTH_INDEFINITE)
+                        Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_bitcoin_address_message, Snackbar.LENGTH_LONG)
                                 .setAction(getString(R.string.action_settings), new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -381,7 +382,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                             myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));
                         } else {
                             // exchange rate is not available
-                            Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_INDEFINITE)
+                            Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_LONG)
                                     .setAction(R.string.retry, new View.OnClickListener() {
                                         @Override
                                         public void onClick(View v) {

@@ -110,7 +110,7 @@
     <string name="action_about">Σχετικά</string>
     <string name="add_payment_address_message">Παρακαλώ σαρώστε ένα QR κωδικό με Bitcoin διεύθυνση ή πληκτρολογήστε μια διεύθυνση.</string>
     <string name="add_payment_address_title">Προσθήκη διεύθυνσης πληρωμής</string>
-    <string name="amount_cannot_be_zero">Το ποσό δε γίνεται να είναι μηδέν</string>
+    <string name="amount_cannot_be_zero">Το συνολικό ποσό δε γίνεται να είναι μηδέν</string>
     <string name="amount_has_more_decimals_than_allowed">Έχετε φτάσει το όριο για τα δεκαδικά που επιτρέπονται για το νόμισμα!</string>
     <string name="amount_less_than_10000_message">Η αξία του ποσού πρέπει να είναι λιγότερο από 10000 BTC !</string>
     <string name="default_currency_code">EUR</string>

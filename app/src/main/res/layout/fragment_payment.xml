@@ -16,7 +16,7 @@
             android:id="@+id/container_total_amount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_heightPercent="17%"
+            app:layout_heightPercent="19%"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -64,7 +64,7 @@
                     android:layout_weight="1"
                     android:layout_gravity="center"
                     android:textAppearance="?android:attr/textAppearanceLarge"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
                     android:textColor="@color/colorPrimaryDark"
                     android:text="@string/total"/>
 
