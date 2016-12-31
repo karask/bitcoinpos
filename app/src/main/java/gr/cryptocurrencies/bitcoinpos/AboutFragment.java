@@ -1,5 +1,7 @@
 package gr.cryptocurrencies.bitcoinpos;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -8,13 +10,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 /**
@@ -30,7 +35,8 @@ public class AboutFragment extends DialogFragment {
     private OnFragmentInteractionListener mListener;
 
     private Button mOkButton;
-    private TextView mAppNameVersionTextView, mCopyrightAuthorNameTextView;
+    private LinearLayout mDonateLayout;
+    private TextView mAppNameVersionTextView, mCopyrightAuthorNameTextView, mDonateAddressTextView;
     public AboutFragment() {
         // Required empty public constructor
     }
@@ -81,6 +87,18 @@ public class AboutFragment extends DialogFragment {
             public void onClick(View v) {
                 // call parents method to close dialog fragment
                 mListener.onAboutOk();
+            }
+        });
+
+        mDonateAddressTextView = (TextView)  fragmentView.findViewById(R.id.donate_address_textview);
+        mDonateLayout = (LinearLayout) fragmentView.findViewById(R.id.donate_layout);
+        mDonateLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("donate_address", mDonateAddressTextView.getText().toString());
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(getContext(), R.string.copied_bitcoin_address, Toast.LENGTH_SHORT).show();
             }
         });
 

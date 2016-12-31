@@ -16,8 +16,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:paddingTop="20dp"
-        android:paddingBottom="10dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="5dp"
         android:text="@string/app_name"
         android:id="@+id/appname_version_textview"
         android:layout_below="@id/logo_image"
@@ -27,11 +27,52 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:paddingBottom="20dp"
+        android:paddingBottom="10dp"
         android:id="@+id/copyright_author_textview"
         android:layout_below="@id/appname_version_textview"
         android:text="@string/konstantinos_karasavvas"
         style="@style/AboutTextViewStyle"   />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="10dp"
+        android:id="@+id/exchange_rate_textview"
+        android:layout_below="@id/copyright_author_textview"
+        android:text="@string/exchange_rate"
+        style="@style/AboutTextViewStyle"   />
+
+    <LinearLayout
+        android:id="@+id/donate_layout"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:padding="3dp"
+        android:layout_above="@+id/about_ok_button">
+
+
+        <ImageView
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/donate"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/donate_address_textview"
+            android:gravity="center_vertical"
+            android:layout_weight="1"
+            android:paddingLeft="5dp"
+            android:textSize="@dimen/donate_address_size"
+            android:text="1HACzxUGzfU4C8C4TgYExDJdUZ2vUhNv7q"
+            style="@style/AboutTextViewStyle"
+            />
+
+    </LinearLayout>
+
 
     <Button
         android:layout_width="wrap_content"

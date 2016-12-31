@@ -166,5 +166,7 @@
     <string name="remove_all">Αφαίρεση όλων</string>
     <string name="choose_item">Επιλέξτε ένα είδος</string>
     <string name="all_items_same_currency">Προς το παρόν, όλα τα είδη στο καλάθι πρέπει να είναι στο ίδιο νόμισμα</string>
+    <string name="exchange_rate">Ισοτιμία συναλλάγματος: Yahoo! Finance</string>
+    <string name="copied_bitcoin_address">Η διεύθυνση αποθηκεύτηκε στο πρόχειρο!</string>
 
 </resources>
