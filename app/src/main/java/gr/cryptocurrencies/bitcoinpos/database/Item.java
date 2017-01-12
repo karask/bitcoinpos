@@ -30,7 +30,7 @@ public class Item implements Parcelable {
 
     public Item(Integer itemId, String name, String description, double amount, int order, String color, boolean isAvailable, Date createdAt) {
 
-        if(name == null || amount < 0)
+        if(name == null)
             throw new IllegalArgumentException("Name or amount are invalid!");
 
         this.itemId = itemId;

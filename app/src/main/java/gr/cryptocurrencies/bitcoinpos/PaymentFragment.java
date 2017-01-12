@@ -355,8 +355,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
                         });
                         mesg.show();
-                    } else if(totalAmountTextView.getText().toString().equals("0")) {
-                        Toast.makeText(getContext(), R.string.amount_cannot_be_zero, Toast.LENGTH_SHORT).show();
+                    } else if(Double.parseDouble(totalAmountTextView.getText().toString()) <= 0) {
+                        Toast.makeText(getContext(), R.string.amount_needs_to_be_positive, Toast.LENGTH_SHORT).show();
                     } else if(checkIfNetworkConnectionAvailable()) {   // check also displays toast with issue  TODO clean with else clause and simpler check
 
                         if(exchangeRates.getLastUpdated() != null) {
