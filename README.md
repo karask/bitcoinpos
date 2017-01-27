@@ -25,6 +25,4 @@ If you are using another currency please contact me and I will add the currency 
 
 ## TODO    
 * Test with multisig accounts
-* Test with HD addresses
-* Clean code 
 * Add NFC support
