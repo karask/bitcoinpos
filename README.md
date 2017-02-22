@@ -4,7 +4,7 @@ This is a simple Bitcoin Point of Sale application for android devices. It suppo
 
 It currently supports the following languages: English and Greek.
 
-It currently supports the following currencies: EUR, USD, GBD, CNY, INR, JPY, RUB, ARS, AUD, BDT, BRL, CAD, XAF, DZD, CLP, COP, CZK, EGP, AED, GHS, HUF, IDR, IRR, ILS, KZT, KES, MYR, MXN, MAD, NZD, NGN, PKR, PEN, PHP, RON, SAR, ZAR, KRW, SDG, SEK, CHF, THB, TRY, UGX, UAH, UZS, VEF and VND.
+It currently supports the following currencies: EUR, USD, GBD, CNY, INR, JPY, RUB, ARS, AUD, BDT, BRL, CAD, XAF, XOF, DZD, CLP, COP, CZK, EGP, AED, GHS, HUF, IDR, IRR, ILS, KZT, KES, MYR, MXN, MAD, NZD, NGN, PKR, PEN, PHP, RON, SAR, ZAR, KRW, SDG, SEK, CHF, THB, TRY, UGX, UAH, UZS, VEF and VND.
 
 If you are using another currency please contact me and I will add the currency required.
 
