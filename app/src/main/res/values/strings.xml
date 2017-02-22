@@ -100,6 +100,7 @@
         <item>UZS</item>
         <item>VEF</item>
         <item>VND</item>
+        <item>XOF</item>
     </string-array>
 
     <string-array name="currency_names">
@@ -110,7 +111,7 @@
         <item>Brazilian Real</item>
         <item>British Pound</item>
         <item>Canadian Dollar</item>
-        <item>Central African Franc</item>
+        <item>Central African CFA</item>
         <item>Chilean Peso</item>
         <item>Chinese Yuan</item>
         <item>Colombian Peso</item>
@@ -151,6 +152,7 @@
         <item>Uzbekistani Som</item>
         <item>Venezuelan Bolivar</item>
         <item>Vietnamese Dong</item>
+        <item>West African CFA</item>
     </string-array>
 
     <string name="default_currency_code">EUR</string>
