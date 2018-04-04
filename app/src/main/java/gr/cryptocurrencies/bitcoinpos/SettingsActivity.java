@@ -3,6 +3,7 @@ package gr.cryptocurrencies.bitcoinpos;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.ListPreference;
@@ -73,10 +74,10 @@ public class SettingsActivity extends AppCompatActivity {
 
 
 
-
     public static class SettingsFragment extends PreferenceFragmentCompat  implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         SharedPreferences mSharedPreferences;
+        Fragment currentFragment;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -123,17 +124,17 @@ public class SettingsActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setTitle(R.string.add_payment_address_title);
                 builder.setMessage(getString(R.string.add_payment_address_message));
-                setTargetFragment(this, 0);
+                currentFragment = this;//setTargetFragment(this, 0);
 
                 // SCAN button
                 builder.setNegativeButton(getString(R.string.scan), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        IntentIntegrator integrator = IntentIntegrator.forSupportFragment(getTargetFragment());
+                        IntentIntegrator integrator = IntentIntegrator.forSupportFragment(currentFragment);//getTargetFragment());
                         integrator.setBeepEnabled(true);
                         integrator.setOrientationLocked(true);
                         integrator.setCaptureActivity(ScanQrCodeActivity.class);
                         integrator.setPrompt(getString(R.string.scan_qr_code_prompt));
-                        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+                        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
 //                        integrator.addExtra("SCAN_WIDTH", 200);
 //                        integrator.addExtra("SCAN_HEIGHT", 200);
                         integrator.initiateScan();

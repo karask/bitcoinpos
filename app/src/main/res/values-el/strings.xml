@@ -6,107 +6,53 @@
 
 
     <string-array name="currency_codes">
-        <item>EGP</item>
-        <item>DZD</item>
-        <item>ARS</item>
         <item>AUD</item>
-        <item>VEF</item>
-        <item>VND</item>
         <item>BRL</item>
-        <item>GHS</item>
-        <item>XOF</item>
+        <item>DKK</item>
         <item>CHF</item>
         <item>@string/default_currency_code</item>
-        <item>AED</item>
         <item>USD</item>
         <item>GBP</item>
         <item>JPY</item>
         <item>INR</item>
-        <item>IDR</item>
-        <item>IRR</item>
-        <item>ILS</item>
-        <item>KZT</item>
+        <item>ISK</item>
         <item>CAD</item>
-        <item>XAF</item>
-        <item>KES</item>
         <item>CNY</item>
-        <item>COP</item>
-        <item>MYR</item>
-        <item>MXN</item>
-        <item>MAD</item>
-        <item>BDT</item>
         <item>NZD</item>
-        <item>NGN</item>
-        <item>HUF</item>
-        <item>UGX</item>
-        <item>UAH</item>
-        <item>UZS</item>
-        <item>PKR</item>
-        <item>PEN</item>
-        <item>RON</item>
+        <item>PLN</item>
         <item>RUB</item>
-        <item>ZAR</item>
         <item>KRW</item>
-        <item>SAR</item>
-        <item>SDG</item>
+        <item>SGD</item>
         <item>SEK</item>
         <item>THB</item>
-        <item>TRY</item>
-        <item>CZK</item>
-        <item>PHP</item>
+        <item>TWD</item>
         <item>CLP</item>
+        <item>HKD</item>
     </string-array>
 
     <string-array name="currency_names">
-        <item>Αίγυπτος - Λίρα</item>
-        <item>Αλγερία - Δηνάριο</item>
-        <item>Αργεντινή - Πέσο</item>
         <item>Αυστραλία - Δολάριο</item>
-        <item>Βενεζουέλα - Μπολίβαρ</item>
-        <item>Βιετνάμ - Ντονγκ</item>
         <item>Βραζιλία - Ρεάλ</item>
-        <item>Γκάνα - Σέντι</item>
-        <item>Δυτική Αφρική - CFA</item>
+        <item>Δανία - Κορόνα</item>
         <item>Ελβετία - Φράγκο</item>
         <item>Ευρωπαϊκή Ένωση - Ευρώ</item>
-        <item>Ηνωμένα Αραβικά Εμιράτα - Ντιρχάμ</item>
         <item>Ηνωμένες Πολιτείες - Δολάριο</item>
         <item>Ηνωμένο Βασίλειο - Λίρα</item>
         <item>Ιαπωνία - Γιεν</item>
         <item>Ινδία - Ρουπία</item>
-        <item>Ινδονησία - Ρουπία</item>
-        <item>Ιράν - Ριάλ</item>
-        <item>Ισραήλ - Νέο Σέκελ</item>
-        <item>Καζακστάν - Τένγκε</item>
+        <item>Ισλανδία - Κορόνα</item>
         <item>Καναδάς - Δολάριο</item>
-        <item>Κεντρική Αφρική - CFA</item>
-        <item>Κένυα - Σελίνι</item>
         <item>Κίνα - Γουάν</item>
-        <item>Κολομβία - Πέσο</item>
-        <item>Μαλαισία - Ρινγκίτ</item>
-        <item>Μεξικό - Πέσο</item>
-        <item>Μαρόκο - Ντιρχάμ</item>
-        <item>Μπανγκλαντές - Τάκα</item>
         <item>Νέα Ζηλανδία - Δολάριο</item>
-        <item>Νιγηρία - Νάϊρα</item>
-        <item>Ουγγαρία - Φιορίνι</item>
-        <item>Ουγκάντα - Σελίνι</item>
-        <item>Ουκρανία - Χρίβνια</item>
-        <item>Ουζμπεκιστάν - Σομ</item>
-        <item>Πακιστάν - Ρουπία</item>
-        <item>Περού - Σολ</item>
-        <item>Ρουμανία - Νέο Λέου</item>
+        <item>Πολωνία - Ζλότι</item>
         <item>Ρωσία - Ρούβλι</item>
-        <item>Νότια Αφρική - Ραντ</item>
         <item>Νότια Κορέα - Γουόν</item>
-        <item>Σαουδική Αραβία - Ριάλ</item>
-        <item>Σουδάν - Λίρα</item>
+        <item>Σιγκαπούρη - Δολάριο</item>
         <item>Σουηδία - Κορόνα</item>
         <item>Ταϊλάνδη - Μπαχτ</item>
-        <item>Τουρκία - Λίρα</item>
-        <item>Τσεχία - Κορόνα</item>
-        <item>Φιλιππίνες - Πέσο</item>
+        <item>Ταϊβάν - Δολάριο</item>
         <item>Χιλή - Πέσο</item>
+        <item>Χονγκ Κονγκ - Δολάριο</item>
     </string-array>
 
     <string name="action_about">Σχετικά</string>
