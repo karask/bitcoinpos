@@ -1,9 +1,9 @@
 <resources>
     <!-- toolbar / about -->
     <string name="app_name">Bitcoin PoS</string>
-    <string name="copyright" translatable="false">\u00A9 2016</string>
+    <string name="copyright" translatable="false">\u00A9 2016-2018</string>
     <string name="konstantinos_karasavvas">Konstantinos Karasavvas</string>
-    <string name="exchange_rate">Exchange rate: Yahoo! Finance</string>
+    <string name="exchange_rate">Exchange rate: Blockchain.Info</string>
     <string name="copied_bitcoin_address">Address copied to clipboard!</string>
 
     <string name="app_name_version" translatable="false">%1$s  v%2$s</string>

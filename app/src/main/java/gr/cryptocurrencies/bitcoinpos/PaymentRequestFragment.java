@@ -149,14 +149,10 @@ public class PaymentRequestFragment extends DialogFragment  {
 
             // generate QR code to show in image view
             try {
-                String bip21Payment;
-                if(BitcoinUtils.isMainNet()) {
-                    // generate BIP 21 compatible payment URI
-                    bip21Payment = "bitcoin:" + mBitcoinAddress + "?amount=" + (mBitcoinIsPrimary ? mPrimaryAmount : mSecondaryAmount) + "&label=" + mMerchantName;
-                } else {
-                    // in testnet ignore BIP 21 (wallet using to send tBTC does not support BIP 21...
-                    bip21Payment = mBitcoinAddress;
-                }
+                // generate BIP 21 compatible payment URI
+                String  bip21Payment = "bitcoin:" + mBitcoinAddress +
+                                        "?amount=" + (mBitcoinIsPrimary ? mPrimaryAmount : mSecondaryAmount) +
+                                        "&label=" + mMerchantName;
                 mQrCodeBitmap = encodeAsBitmap(bip21Payment, smallerDimension); //(mBitcoinAddress);
             } catch (WriterException e) {
                 e.printStackTrace();
@@ -247,7 +243,7 @@ public class PaymentRequestFragment extends DialogFragment  {
                     updateIfUnconfirmedTxId(mBitcoinAddress, amount);
                 } else {
                     Log.d("CHECK FOR CONFIRMED", mPaymentTransaction);
-                    updateIfTxConfirmed(mPaymentTransaction);
+                    updateIfTxConfirmed(mPaymentTransaction, mBitcoinAddress, amount);
                 }
             }
         }, 0, 3000);
@@ -364,16 +360,18 @@ public class PaymentRequestFragment extends DialogFragment  {
 
     // TODO what if we have > 1 tx on the exact amount the last 2 minutes?
     // get recent tx status of specific amount on specific bitcoin address
-    private void updateIfUnconfirmedTxId(String bitcoinAddress, final double amount) {
+    private void updateIfUnconfirmedTxId(final String bitcoinAddress, final double amount) {
         String url;
+        final double amountInSatoshis = amount * 100000000;
+
         if(BitcoinUtils.isMainNet()) {
-            url = "http://btc.blockr.io/api/v1/address/unconfirmed/" + bitcoinAddress;
+            url = "https://blockchain.info/unconfirmed-transactions?format=json";
         } else {
-            url = "http://tbtc.blockr.io/api/v1/address/unconfirmed/" + bitcoinAddress;
+            url = "https://testnet.blockchain.info/unconfirmed-transactions?format=json";
         }
 
-        // TODO BLOCKR JSON attributes should be captured into static vars to avoid manual repetition
-        // http://blockr.io/documentation/api
+        // TODO BLOCKCHAIN.INFO JSON attributes should be captured into static vars to avoid manual repetition
+        // https://www.blockchain.com/api/
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
@@ -381,51 +379,58 @@ public class PaymentRequestFragment extends DialogFragment  {
                     public void onResponse(JSONObject response) {
                         Log.d("UNCONFIRMED TX ID", response.toString());
                         try {
-                            if(response.getString("status").equals("success")) {
-                                // get the last transaction for this amount on that address (if it exists)
-                                JSONArray unconfirmedTxs = response.getJSONObject("data").getJSONArray("unconfirmed");
+                            if(response.has("txs")) {
+                                // get all unconfirmed transactions for this amount on that address (if it exists)
+                                JSONArray unconfirmedTxs = response.getJSONArray("txs");
                                 if(unconfirmedTxs.length() == 0) {
                                     // do nothing, TX not visible in the network
                                 } else {
+                                    // if found mark as Ongoing, otherwise do nothing (TODO is it possible to go to confirmed so fast it never appears here!?!
                                     for(int i=0; i<unconfirmedTxs.length(); i++) {
                                         JSONObject txObj = (JSONObject) unconfirmedTxs.get(i);
-                                        Log.d("UNCONFIRMED AMOUNTS", txObj.getDouble("amount") + "=" + amount);
-                                        if(txObj.getDouble("amount") == amount) {     // if same amount
-                                            // TODO also check recent TX!
+                                        JSONArray outArray = (JSONArray) txObj.getJSONArray("out");
+                                        for(int outIndex=0; outIndex<outArray.length(); outIndex++) {
+                                            JSONObject output = (JSONObject) outArray.get(outIndex);
+                                            Log.d("UNCONFIRMED AMOUNTS", output.getDouble("value") + "=" + amountInSatoshis);
+                                            if(output.getString("addr").equals(bitcoinAddress) && output.getDouble("value") == amountInSatoshis) {
 
-                                            // if found remember the transaction id and use only this for confirmations
-                                            mPaymentTransaction = txObj.getString("tx");
-                                            mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
-                                            mPaymentStatusTextView.setText(R.string.payment_unconfirmed);
+                                                // if found remember the transaction id and use only this for confirmations
+                                                mPaymentTransaction = txObj.getString("hash");
+                                                mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
+                                                mPaymentStatusTextView.setText(R.string.payment_unconfirmed);
 
-                                            // update cancel button and listener
-                                            mCancelButton.setText(R.string.ok);
-                                            mCancelButton.setOnClickListener(new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    // stop timer that would check if transaction was confirmed
-                                                    mTimer.cancel();
+                                                // update cancel button and listener
+                                                mCancelButton.setText(R.string.ok);
+                                                mCancelButton.setOnClickListener(new View.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(View v) {
+                                                        // stop timer that would check if transaction was confirmed
+                                                        mTimer.cancel();
 
-                                                    // call parents method to close dialog fragment
-                                                    mListener.onPaymentRequestFragmentClose(false);
+                                                        // call parents method to close dialog fragment
+                                                        mListener.onPaymentRequestFragmentClose(false);
+                                                    }
+                                                });
+
+                                                // payment is now visible to the network / write to transaction history
+                                                String createdAt = txObj.getString("time"); // time is UNIX Epoch
+
+                                                double btcAmount, localAmount;
+                                                if(mBitcoinIsPrimary) {
+                                                    btcAmount = Double.parseDouble(mPrimaryAmount);
+                                                    localAmount = Double.parseDouble(mSecondaryAmount);
+                                                } else {
+                                                    btcAmount = Double.parseDouble(mSecondaryAmount);
+                                                    localAmount = Double.parseDouble(mPrimaryAmount);
                                                 }
-                                            });
 
-                                            // payment is now visible to the network / write to transaction history
-                                            String createdAt = txObj.getString("time_utc");
+                                                addTransaction(mPaymentTransaction, btcAmount, localAmount, mLocalCurrency,
+                                                        createdAt, null, mMerchantName, mBitcoinAddress, false,
+                                                        mItemsNames, mExchangeRate);
 
-                                            double btcAmount, localAmount;
-                                            if(mBitcoinIsPrimary) {
-                                                btcAmount = Double.parseDouble(mPrimaryAmount);
-                                                localAmount = Double.parseDouble(mSecondaryAmount);
-                                            } else {
-                                                btcAmount = Double.parseDouble(mSecondaryAmount);
-                                                localAmount = Double.parseDouble(mPrimaryAmount);
                                             }
-
-                                            addTransaction(mPaymentTransaction, btcAmount, localAmount, mLocalCurrency,
-                                                    createdAt, null, mMerchantName, mBitcoinAddress, false, mItemsNames, mExchangeRate);
                                         }
+
                                     }
                                 }
                             }
@@ -447,14 +452,16 @@ public class PaymentRequestFragment extends DialogFragment  {
     }
 
 
-    // TODO USED from both here and HistoryFragment ... move to another class that represents Blockr API !!!
+    // TODO USED from both here and HistoryFragment ... move to another class that represents Blockchain.Info API !!!
+    // TODO note that for Blockchain.Info API https://testnet.blockchain.info/rawaddr/2MsYhJvb2ecBKRYT3UG7jLNVmV6eHLVpwRG
+    // TODO could be used to check for both unconfirmed and confirmed txs
     // check if unconfirmed transaction was confirmed (uses mPaymentTransaction stored from getUnconfirmedTxId)
-    private void updateIfTxConfirmed(final String tx) {
+    private void updateIfTxConfirmed(final String tx, final String bitcoinAddress, final double amount) {
         String url;
         if(BitcoinUtils.isMainNet()) {
-            url = "http://btc.blockr.io/api/v1/tx/info/" + tx;
+            url = "https://blockchain.info/rawaddr/" + bitcoinAddress;
         } else {
-            url = "http://tbtc.blockr.io/api/v1/tx/info/" + tx;
+            url = "https://testnet.blockchain.info/rawaddr/" + bitcoinAddress;
         }
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
@@ -464,22 +471,29 @@ public class PaymentRequestFragment extends DialogFragment  {
                     public void onResponse(JSONObject response) {
                         Log.d("CONFIRMED TX", response.toString());
                         try {
-                            if(response.getString("status").equals("success")) {
-                                // get the last transaction for this amount on that address (if it exists)
-                                int confirmations = response.getJSONObject("data").getInt("confirmations");
-                                if(confirmations > 0) {
-                                    // Transaction was confirmed - stop the timer/repetitions
-                                    if(mTimer != null)
-                                        mTimer.cancel();
+                            if(response.has("address") && response.getString("address").equals(bitcoinAddress)) {
 
-                                    // if found transaction was confirmed
-                                    mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.brightGreen));
-                                    mPaymentStatusTextView.setText(R.string.payment_confirmed);
+                                JSONArray allTxs = (JSONArray) response.getJSONArray("txs");
+                                JSONObject ongoingTx;
+                                for(int i=0; i<allTxs.length(); i++) {
+                                    JSONObject trx = (JSONObject) allTxs.get(i);
+                                    if(trx.getString("hash").equals(tx) && trx.has("block_height")) {
+                                        // Transaction was confirmed - stop the timer/repetitions
+                                        if(mTimer != null)
+                                            mTimer.cancel();
 
-                                    // transaction was confirmed / update transaction history
-                                    String confirmedAt = response.getJSONObject("data").getString("time_utc");
-                                    updateDbTransactionToConfirmed(tx, confirmedAt);
+                                        // if found transaction was confirmed
+                                        mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.brightGreen));
+                                        mPaymentStatusTextView.setText(R.string.payment_confirmed);
+
+                                        // transaction was confirmed / update transaction history
+                                        String confirmedAt = trx.getString("time"); // time is unix timestamp
+                                        updateDbTransactionToConfirmed(tx, confirmedAt);
+
+                                        break;
+                                    }
                                 }
+
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();

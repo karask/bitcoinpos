@@ -34,6 +34,7 @@ import gr.cryptocurrencies.bitcoinpos.network.Requests;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
 import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -131,7 +133,9 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
             do {
                 if ("0".equals(c.getString(4))) {
                     String txId = c.getString(0);
-                    updateIfTxConfirmed(txId);
+                    String bitcoinAddress = c.getString(6);
+                    double btcAmount = c.getDouble(5);
+                    updateIfTxConfirmed(txId, bitcoinAddress, btcAmount);
 
                 }
             } while (c.moveToNext());
@@ -153,7 +157,8 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT };
+                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS };
 
         String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
         Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, null, null, null, null, sortOrder);
@@ -209,13 +214,13 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     }
 
 
-    // TODO USED from both here and HistoryFragment ... move to another class that represents Blockr API !!!
-    private void updateIfTxConfirmed(final String tx) {
+    // TODO USED from both here and PaymentRequestFragment ... move to another class that represents Blockchain.Info API !!!
+    private void updateIfTxConfirmed(final String tx, final String bitcoinAddress, final double amount) {
         String url;
         if(BitcoinUtils.isMainNet()) {
-            url = "http://btc.blockr.io/api/v1/tx/info/" + tx;
+            url = "https://blockchain.info/rawaddr/" + bitcoinAddress;
         } else {
-            url = "http://tbtc.blockr.io/api/v1/tx/info/" + tx;
+            url = "https://testnet.blockchain.info/rawaddr/" + bitcoinAddress;
         }
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
@@ -225,16 +230,20 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                     public void onResponse(JSONObject response) {
                         Log.d("CONFIRMED TX 2", response.toString());
                         try {
-                            if(response.getString("status").equals("success")) {
-                                // get the last transaction for this amount on that address (if it exists)
-                                int confirmations = response.getJSONObject("data").getInt("confirmations");
-                                if(confirmations > 0) {
-                                    // transaction was confirmed / update transaction history
-                                    String confirmedAt = response.getJSONObject("data").getString("time_utc");
-                                    if(updateTransactionToConfirmed(tx, confirmedAt)) {
-                                        updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
-                                        updateTransactionHistoryView();
+                            if(response.has("address") && response.getString("address").equals(bitcoinAddress)) {
+                                JSONArray allTxs = (JSONArray) response.getJSONArray("txs");
+                                JSONObject ongoingTx;
+                                for(int i=0; i<allTxs.length(); i++) {
+                                    JSONObject trx = (JSONObject) allTxs.get(i);
+                                    if (trx.getString("hash").equals(tx) && trx.has("block_height")) {
+                                        // transaction was confirmed / update transaction history
+                                        String confirmedAt = trx.getString("time");
+                                        if (updateTransactionToConfirmed(tx, confirmedAt)) {
+                                            updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
+                                            updateTransactionHistoryView();
+                                        }
                                     }
+                                    break;
                                 }
                             }
                         } catch (JSONException e) {
@@ -331,10 +340,18 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE };
 
-        String paddedStartMonth = String.format("%02d", mStartMonth +1); // +1 since index starts from 0
-        String paddedEndMonth = String.format("%02d", mEndMonth +1 +1);  // 2nd +1 for sql <= text comparison
-        String whereClause = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " >= '" + mStartYear + "-" + paddedStartMonth + "' and " +
-                PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= '" + mEndYear + "-" + paddedEndMonth + "' and " +
+        Calendar start = Calendar.getInstance();
+        start.set(startYear, startMonth, 1, 0,0);
+        long startInUnixTime = start.getTimeInMillis() / 1000L;
+        Calendar end = Calendar.getInstance();
+        end.set(endYear, endMonth, 31, 0,0);
+        long endInUnixTime = end.getTimeInMillis() / 1000L;
+
+        // date in db used to be yyyy-mm-dd ...
+        //String paddedStartMonth = String.format("%02d", mStartMonth +1); // +1 since index starts from 0
+        //String paddedEndMonth = String.format("%02d", mEndMonth +1 +1);  // 2nd +1 for sql <= text comparison
+        String whereClause = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " >= " + startInUnixTime + " and " +
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= " + endInUnixTime + " and " +
                 PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED + " = 1";
 
         String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";

@@ -8,8 +8,8 @@ android {
         applicationId "gr.cryptocurrencies.bitcoinpos"
         minSdkVersion 16
         targetSdkVersion 27
-        versionCode 13
-        versionName "1.4.0"
+        versionCode 14
+        versionName "1.5.0"
 
         multiDexEnabled true
     }
@@ -41,7 +41,7 @@ dependencies {
     compile 'com.android.support:design:27.1.0'
     compile 'com.android.support:gridlayout-v7:27.1.0'
     compile 'com.android.support:percent:27.1.0'
-    compile 'com.android.volley:volley:1.0.0'
+    compile 'com.android.volley:volley:1.1.0'
     compile 'com.google.zxing:core:3.3.0'
     compile('com.journeyapps:zxing-android-embedded:3.6.0@aar') {transitive = false}
     compile 'com.android.support:recyclerview-v7:27.1.0'

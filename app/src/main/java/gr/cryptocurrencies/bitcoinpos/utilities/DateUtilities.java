@@ -24,20 +24,17 @@ public class DateUtilities {
 
     public static String getRelativeTimeString(String date) {
 
-        DateFormat dbDf = new SimpleDateFormat(DateUtilities.DATABASE_DATE_FORMAT);
-        dbDf.setTimeZone(TimeZone.getTimeZone(DateUtilities.UTC));
+        // previously DB wasn't unix timestamp because of previous block explorer service didn't use it
+        //DateFormat dbDf = new SimpleDateFormat(DateUtilities.DATABASE_DATE_FORMAT);
+        //dbDf.setTimeZone(TimeZone.getTimeZone(DateUtilities.UTC));
         DateFormat uiDf = new SimpleDateFormat(DateUtilities.USER_INTERFACE_DATE_FORMAT);
         uiDf.setTimeZone(Calendar.getInstance().getTimeZone());
 
-        Date dbDate = null;
-        try {
-            dbDate = dbDf.parse(date);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        long dbTimeInMillis = dbDate.getTime();
+        long dbTimeInMillis = Long.parseLong(date);
         long currentTimeInMillis = System.currentTimeMillis();
+
+        Date dbDate = null;
+        dbDate = new Date((long) dbTimeInMillis*1000);
 
         // convert to friendly relative time string onl if difference less than 23 hours
         String relativeTimeString;
