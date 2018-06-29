@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -175,9 +176,13 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
             do {
                 HashMap<String, String> item = new HashMap<String, String>();
+                // Get BTC double value and convert to string without scientific notation
+                DecimalFormat df = new DecimalFormat("#.########");
+                String btc8DecimalAmount = df.format(c.getDouble(5));
+
                 //item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID, c.getString(0));
                 item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, c.getString(1) + " " + c.getString(2));
-                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, c.getString(5) + " BTC");
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btc8DecimalAmount + " BTC");
                 item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT, DateUtilities.getRelativeTimeString(c.getString(3)));
 
                 int isConfirmedImage = "1".equals(c.getString(4)) ? R.drawable.ic_tick_green_24dp : R.drawable.ic_warning_orange_24dp;
@@ -503,15 +508,27 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         // for each unconfirmed transaction check if confirmed
         if(c.moveToFirst()) {
             do {
+                // Get BTC double value and convert to string without scientific notation
+                DecimalFormat df = new DecimalFormat("#.########");
+                double amount = c.getDouble(1);
+                String btc8DecimalAmount = df.format(amount);
+
+                // Get only product name from "name[-|-]0.5" strings that DB contains
+                String dbProduct = c.getString(6) == null ? "" : c.getString(6);
+                String productName = dbProduct.substring(0, dbProduct.lastIndexOf("[-|-]"));
+
                 csvStr.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-                        c.getString(0), c.getString(1),
+                        c.getString(0), btc8DecimalAmount,
                         c.getString(2), c.getString(3),
-                        c.getString(8) == null ? "" : c.getString(8),   // exchange rate
-                        c.getString(4), c.getString(5),
-                        c.getString(6) == null ? "" : c.getString(6),   // product name
+                        c.getString(8) == null ? "" : c.getString(8), // exchange rate
+                        DateUtilities.getRelativeTimeString(c.getString(4)),     // date
+                        c.getString(5),                                 // merchant name
+                        productName,
                         c.getString(7)                                  // bitcoin address
                 ));
-                totalBitcoins += Double.parseDouble(c.getString(1));
+
+                // sum all (double) amounts
+                totalBitcoins += amount;
             } while (c.moveToNext());
 
         }

@@ -38,6 +38,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -150,13 +152,16 @@ public class PaymentRequestFragment extends DialogFragment  {
             // generate QR code to show in image view
             try {
                 // generate BIP 21 compatible payment URI
-                String  bip21Payment = "bitcoin:" + mBitcoinAddress +
-                                        "?amount=" + (mBitcoinIsPrimary ? mPrimaryAmount : mSecondaryAmount) +
-                                        "&label=" + mMerchantName;
+                String bip21Payment = "bitcoin:" + mBitcoinAddress +
+                        "?amount=" + (mBitcoinIsPrimary ? mPrimaryAmount : mSecondaryAmount) +
+                        "&label=" + URLEncoder.encode(mMerchantName, "UTF-8");
                 mQrCodeBitmap = encodeAsBitmap(bip21Payment, smallerDimension); //(mBitcoinAddress);
-            } catch (WriterException e) {
-                e.printStackTrace();
+            } catch (WriterException we) {
+                we.printStackTrace();
+            } catch (UnsupportedEncodingException uee) {
+                uee.printStackTrace();
             }
+
             
         }
     }
