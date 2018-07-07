@@ -38,10 +38,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.opencsv.CSVWriter;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -496,50 +499,10 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         StringBuilder csvStr = new StringBuilder();
         double totalBitcoins = 0;
 
-        // add headers
-        csvStr.append("Transaction Id,Bitcoin Amount,Local Amount,Local Currency,Exchange Rage (BTC->Local),Created At (UTC),Merchant Name,Product Name,Bitcoin Address\n");
-
-        if(confirmedTxsInRange == null)
-            c = getTransactionHistoryInRangeCursor(startYear, startMonth, endYear, endMonth);
-        else
-            c = confirmedTxsInRange;
-
-        // for each tx enter a row in csv file
-        // for each unconfirmed transaction check if confirmed
-        if(c.moveToFirst()) {
-            do {
-                // Get BTC double value and convert to string without scientific notation
-                DecimalFormat df = new DecimalFormat("#.########");
-                double amount = c.getDouble(1);
-                String btc8DecimalAmount = df.format(amount);
-
-                // Get only product name from "name[-|-]0.5" strings that DB contains
-                String dbProduct = c.getString(6) == null ? "" : c.getString(6);
-                String productName = dbProduct.substring(0, dbProduct.lastIndexOf("[-|-]"));
-
-                csvStr.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-                        c.getString(0), btc8DecimalAmount,
-                        c.getString(2), c.getString(3),
-                        c.getString(8) == null ? "" : c.getString(8), // exchange rate
-                        DateUtilities.getRelativeTimeString(c.getString(4)),     // date
-                        c.getString(5),                                 // merchant name
-                        productName,
-                        c.getString(7)                                  // bitcoin address
-                ));
-
-                // sum all (double) amounts
-                totalBitcoins += amount;
-            } while (c.moveToNext());
-
-        }
-
-        csvStr.append("\nTotal in bitcoins: " + String.format("%.8f", totalBitcoins));
-
-        // get Downloads folders path
+        // get Downloads folders path and construct csv filename
         File downloadsPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         int counter = 1;
         File csvFile;
-        FileOutputStream csvStream;
         csvFile = new File(downloadsPath.toString() + "/BitcoinPoS-" + counter + ".csv");
         while(csvFile.exists()) {
             counter++;
@@ -547,9 +510,70 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         }
 
         try {
-            csvStream = new FileOutputStream(csvFile);
-            csvStream.write(csvStr.toString().getBytes());
-            csvStream.close();
+            FileOutputStream fos = new FileOutputStream(csvFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+            CSVWriter writer = new CSVWriter(osw);
+
+            // add headers
+            String[] headers = {
+                    "Transaction Id",
+                    "Bitcoin Amount",
+                    "Local Amount",
+                    "Local Currency",
+                    "Exchange Rate (BTC->Local)",
+                    "Created At (UTC)",
+                    "Merchant Name",
+                    "Product Name",
+                    "Bitcoin Address"
+            };
+            writer.writeNext(headers);
+
+            if (confirmedTxsInRange == null)
+                c = getTransactionHistoryInRangeCursor(startYear, startMonth, endYear, endMonth);
+            else
+                c = confirmedTxsInRange;
+
+            // for each tx enter a row in csv file
+            // for each unconfirmed transaction check if confirmed
+            if (c.moveToFirst()) {
+                do {
+                    // Get BTC double value and convert to string without scientific notation
+                    DecimalFormat df = new DecimalFormat("#.########");
+                    double amount = c.getDouble(1);
+                    String btc8DecimalAmount = df.format(amount);
+
+                    // Get only product name from "name[-|-]0.5" strings that DB contains
+                    String dbProduct = c.getString(6) == null ? "" : c.getString(6);
+                    String productName = dbProduct.substring(0, dbProduct.lastIndexOf("[-|-]"));
+
+                    String[] row = {
+                            c.getString(0),
+                            btc8DecimalAmount,
+                            c.getString(2),
+                            c.getString(3),
+                            c.getString(8) == null ? "" : c.getString(8), // exchange rate
+                            DateUtilities.getRelativeTimeString(c.getString(4)),     // date
+                            c.getString(5),                                 // merchant name
+                            productName,
+                            c.getString(7)                                  // bitcoin address
+                    };
+
+                    writer.writeNext(row);
+
+                    // sum all (double) amounts
+                    totalBitcoins += amount;
+                } while (c.moveToNext());
+
+            }
+
+            // write total amount of bitcoins
+            String[] totalAmountString = { "Total in bitcoins: " + String.format("%.8f", totalBitcoins) };
+            writer.writeNext(totalAmountString);
+
+            writer.close();
+            osw.close();
+            fos.close();
+
         } catch (FileNotFoundException fnfe) {
             fnfe.printStackTrace();
         } catch (IOException ioe) {

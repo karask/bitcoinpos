@@ -8,8 +8,8 @@ android {
         applicationId "gr.cryptocurrencies.bitcoinpos"
         minSdkVersion 16
         targetSdkVersion 27
-        versionCode 15
-        versionName "1.5.1"
+        versionCode 16
+        versionName "1.5.2"
 
         multiDexEnabled true
     }
@@ -29,6 +29,9 @@ android {
         enabled = true
     }
 
+    lintOptions {
+        checkReleaseBuilds false
+    }
 }
 
 dependencies {
@@ -46,4 +49,5 @@ dependencies {
     compile('com.journeyapps:zxing-android-embedded:3.6.0@aar') {transitive = false}
     compile 'com.android.support:recyclerview-v7:27.1.0'
     compile 'com.github.amlcurran.showcaseview:library:5.4.3'
+    compile 'com.opencsv:opencsv:4.2'
 }
