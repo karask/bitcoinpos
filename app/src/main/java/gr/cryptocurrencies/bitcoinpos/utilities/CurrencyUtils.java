@@ -7,9 +7,7 @@ import java.util.Locale;
 
 import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
 
-/**
- * Created by kostas on 26/8/2016.
- */
+
 public class CurrencyUtils {
 
     private static final double maxBTCAmount = 10000;

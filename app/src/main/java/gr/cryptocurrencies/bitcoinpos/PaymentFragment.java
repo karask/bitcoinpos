@@ -2,13 +2,17 @@ package gr.cryptocurrencies.bitcoinpos;
 
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -27,8 +31,12 @@ import android.widget.ToggleButton;
 
 import gr.cryptocurrencies.bitcoinpos.database.Item;
 import gr.cryptocurrencies.bitcoinpos.database.ItemHelper;
+import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
+import gr.cryptocurrencies.bitcoinpos.database.TxStatus;
+import gr.cryptocurrencies.bitcoinpos.database.UpdateDbHelper;
 import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
 import gr.cryptocurrencies.bitcoinpos.network.Utilities;
+import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinAddressValidator;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
 import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 
@@ -36,9 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by kostas on 14/6/2016.
- */
+
 public class PaymentFragment extends Fragment implements View.OnClickListener, FragmentIsNowVisible {
 
     CoordinatorLayout coordinatorLayout;
@@ -56,6 +62,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
     String mMerchantName;
 
     List<Item> mItemsInCart = new ArrayList<>();
+    private PointOfSaleDb mDbHelper;
 
     public PaymentFragment() {
         // Required empty public constructor
@@ -156,13 +163,15 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if(Utilities.isNetworkConnectionAvailable(getContext())) {
+        if(Utilities.isNetworkConnectionAvailable(getActivity())) {
             ExchangeRates exchangeRates = ExchangeRates.getInstance();
-            exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+            exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
         } else {
             // checks again and then displays... maybe do it manually without method!
             checkIfNetworkConnectionAvailable();
         }
+
+
     }
 
 
@@ -206,14 +215,14 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                         // TODO since no items and amount is 0 these conversions are useless for now
                         // was BTC - convert to local currency
                         totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
-                        totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount) + " BTC");
+                        totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount) + " " + String.valueOf(CurrencyUtils.CurrencyType.BTC));
                     }
                 } else {
                     // toggle failed -- toggle programmatically to revert
                     currencyToggle.toggle();
 
                     // checks network connection and then displays message with retry
-                    if (!Utilities.isNetworkConnectionAvailable(getContext())) {
+                    if (!Utilities.isNetworkConnectionAvailable(getActivity())) {
                         Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_LONG)
                                 .setAction(R.string.retry, new View.OnClickListener() {
                                     @Override
@@ -225,8 +234,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                         mesg.show();
                     } else {
                         // attempt to get exchange rates again
-                        exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
-                        Toast.makeText(getContext(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
+                        exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
+                        Toast.makeText(getActivity(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
                     }
                 }
             } else {
@@ -256,7 +265,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     break;
                 case R.id.btn_inv:
                     // check if Items db is empty
-                    ItemHelper itemHelper = ItemHelper.getInstance(getContext());
+                    ItemHelper itemHelper = ItemHelper.getInstance(getActivity());
                     List<Item> allItems = itemHelper.getAll();
                     if(allItems.size() > 0) {
                         DialogFragment myDialog = ShowItemFragment.newInstance(1, ShowItemFragment.DialogType.SELECT_ITEM_LIST, allItems);
@@ -280,9 +289,10 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                         double cartTotalAmount = CurrencyUtils.stringAmountToDouble(totalAmountTextView.getText().toString());
                         double newCartTotalAmount = cartTotalAmount + cartItemAmount;
                         String newCartTotalAmountStr, newCartSecondaryTotalAmountStr;
+
                         if(currencyToggle.isChecked()) {
                             newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.LOCAL);
-                            newCartSecondaryTotalAmountStr = CurrencyUtils.getBtcFromLocalCurrency(newCartTotalAmountStr) + " BTC";
+                            newCartSecondaryTotalAmountStr = CurrencyUtils.getBtcFromLocalCurrency(newCartTotalAmountStr) + " " + String.valueOf(CurrencyUtils.CurrencyType.BTC);
                         } else {
                             newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.BTC);
                             newCartSecondaryTotalAmountStr = CurrencyUtils.getLocalCurrencyFromBtc(newCartTotalAmountStr) + " " + mLocalCurrency;
@@ -342,21 +352,21 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 case R.id.request_payment:
                     // update exchange rates for this or next payment request
                     ExchangeRates exchangeRates = ExchangeRates.getInstance();
-                    exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+                    exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
 
-                    if (mBitcoinPaymentAddress.isEmpty() || !BitcoinUtils.validateAddress(mBitcoinPaymentAddress)) {
+                    if (mBitcoinPaymentAddress.isEmpty() || !BitcoinAddressValidator.validate(mBitcoinPaymentAddress)) {
                         Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_bitcoin_address_message, Snackbar.LENGTH_LONG)
                                 .setAction(getString(R.string.action_settings), new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                Intent goToSettings = new Intent(getContext(), SettingsActivity.class);
+                                Intent goToSettings = new Intent(getActivity(), SettingsActivity.class);
                                 startActivity(goToSettings);
                             }
 
                         });
                         mesg.show();
                     } else if(Double.parseDouble(totalAmountTextView.getText().toString()) <= 0) {
-                        Toast.makeText(getContext(), R.string.amount_needs_to_be_positive, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), R.string.amount_needs_to_be_positive, Toast.LENGTH_SHORT).show();
                     } else if(checkIfNetworkConnectionAvailable()) {   // check also displays toast with issue  TODO clean with else clause and simpler check
 
                         if(exchangeRates.getLastUpdated() != null) {
@@ -375,11 +385,21 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                                 isPrimaryAmount = true;
                             }
 
+                            double btcAmount = (isPrimaryAmount) ? Double.parseDouble(primaryAmount) : Double.parseDouble(secondaryAmount);
+
+                            //query database to check if there is another tx with the same amount of BTC and for the same payment address
+                            boolean statusOtherTxWithSameAmount = UpdateDbHelper.checkIfAlreadyCreatedTx(btcAmount,mBitcoinPaymentAddress);
+                            if(statusOtherTxWithSameAmount){
+                                showDialogCannotCreateNewTransaction();
+                            }
+                            else {
                             DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount,
                                     secondaryAmount, isPrimaryAmount, mLocalCurrency, String.valueOf(exchangeRates.getBtcToLocalRate()), convertCartItemsToString(mItemsInCart));
                             // for API >= 23 the title is disable by default -- we set a style that enables it
                             myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
                             myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));
+                            }
+
                         } else {
                             // exchange rate is not available
                             Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_LONG)
@@ -417,7 +437,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
 
     private boolean checkIfNetworkConnectionAvailable() {
-        if(!Utilities.isNetworkConnectionAvailable(getContext())) {
+        if(!Utilities.isNetworkConnectionAvailable(getActivity())) {
             Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_SHORT).show();
             return false;
         }
@@ -434,9 +454,9 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
             return false;
         } else {
             if(error == -1) {
-                Toast.makeText(getContext(), R.string.amount_less_than_10000_message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), R.string.amount_less_than_10000_message, Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(getContext(), R.string.amount_has_more_decimals_than_allowed, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), R.string.amount_has_more_decimals_than_allowed, Toast.LENGTH_SHORT).show();
             }
             return true;
         }
@@ -447,4 +467,27 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         // nothing to do when it becomes visible for now
         // TODO could update the exchange rates!
     }
+
+    //
+
+
+    private void showDialogCannotCreateNewTransaction() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(getString(R.string.other_pending_or_ongoing_transaction_title));
+        builder.setMessage(getString(R.string.other_pending_or_ongoing_transaction_found_message));
+        builder.setCancelable(true);
+
+        builder.setPositiveButton(
+                "Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                       dialog.cancel();
+                    }
+                });
+
+        AlertDialog alert11 = builder.create();
+        alert11.show();
+    }
+
 }

@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinAddressValidator;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -36,7 +37,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         // get caller params
         Intent caller = getIntent();
-        boolean showAddressInvalidMessage = caller.getBooleanExtra(BitcoinUtils.showAddressInvalidMessage, false);
+        boolean showAddressInvalidMessage = caller.getBooleanExtra(BitcoinAddressValidator.showAddressInvalidMessage, false);//BitcoinUtils.showAddressInvalidMessage was used before
 
         // Display toolbar and back arrow -- title and parent is found in activity tag in manifest
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -71,6 +72,15 @@ public class SettingsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    //when address was changed and back was pressed from phone's button, it was not used instantly in MainActivity and fragments,
+    // added on back pressed to work as in 'onOptionsItemSelected' when back is pressed from toolbar
+    @Override
+    public void onBackPressed()
+    {
+        NavUtils.navigateUpFromSameTask(this);
+
+        super.onBackPressed();
+    }
 
 
 
@@ -121,7 +131,7 @@ public class SettingsActivity extends AppCompatActivity {
         public boolean onPreferenceTreeClick(final Preference preference) {
             if(preference.getKey().equals(getString(R.string.payment_address_key))) {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setTitle(R.string.add_payment_address_title);
                 builder.setMessage(getString(R.string.add_payment_address_message));
                 currentFragment = this;//setTargetFragment(this, 0);
@@ -184,7 +194,8 @@ public class SettingsActivity extends AppCompatActivity {
                 public void onClick(DialogInterface dialog, int which) {
                     // get value and validate
                     String address = input.getText().toString();
-                    boolean isAddressValid = BitcoinUtils.validateAddress(address);
+                    //boolean isAddressValid = BitcoinUtils.validateAddress(address);
+                    boolean isAddressValid = BitcoinAddressValidator.validate(address);
                     if(isAddressValid) {
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
                         editor.putString(getString(R.string.payment_address_key), input.getText().toString());
@@ -224,13 +235,14 @@ public class SettingsActivity extends AppCompatActivity {
                     Log.d("SCANNER ADDRESS", addressString);
 
                     // if BIP 21 is used get the address
-                    if(BitcoinUtils.isAddressUsingBIP21(addressString)) {
-                        address = BitcoinUtils.getAddressFromBip21String(addressString);
+                    if(BitcoinAddressValidator.isAddressUsingBIP21(addressString)) {
+                        address = BitcoinAddressValidator.getAddressFromBip21String(addressString);
                     } else {
                         address = addressString;
                     }
 
-                    isAddressValid = BitcoinUtils.validateAddress(address);
+                    //isAddressValid = BitcoinUtils.validateAddress(address);//previous check
+                    isAddressValid = BitcoinAddressValidator.validate(address);
                     if(isAddressValid) {
                         // set appropriate setting/preference
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
@@ -241,7 +253,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 // go to settings activity
                 Intent goToSettings = new Intent(getContext(), SettingsActivity.class);
-                goToSettings.putExtra(BitcoinUtils.showAddressInvalidMessage, !isAddressValid);
+                goToSettings.putExtra(BitcoinAddressValidator.showAddressInvalidMessage, !isAddressValid); //BitcoinUtils.showAddressInvalidMessage was used before
                 goToSettings.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(goToSettings);
 

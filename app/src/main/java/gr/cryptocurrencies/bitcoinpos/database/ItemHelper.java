@@ -10,9 +10,6 @@ import java.util.List;
 
 import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
 
-/**
- * Created by kostas on 23/8/2016.
- */
 public class ItemHelper {
     private static ItemHelper ourInstance = new ItemHelper();
 

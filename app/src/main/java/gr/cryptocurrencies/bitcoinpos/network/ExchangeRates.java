@@ -13,9 +13,7 @@ import java.util.Date;
 import org.json.JSONObject;
 import org.json.JSONException;
 
-/**
- * Created by kostas on 2/7/2016. Using Blockchain.info exchange rate (15m delay)
- */
+
 public class ExchangeRates {
 
     private static ExchangeRates mInstance = null;

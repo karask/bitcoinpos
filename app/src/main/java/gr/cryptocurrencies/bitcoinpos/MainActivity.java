@@ -16,6 +16,10 @@ import java.util.Date;
 
 import gr.cryptocurrencies.bitcoinpos.database.Item;
 import gr.cryptocurrencies.bitcoinpos.database.ItemHelper;
+import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
+import gr.cryptocurrencies.bitcoinpos.database.UpdateDbHelper;
+import gr.cryptocurrencies.bitcoinpos.network.BlockchainInfoHelper;
+
 import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 
 public class MainActivity extends AppCompatActivity implements PaymentRequestFragment.OnFragmentInteractionListener,
@@ -39,6 +43,9 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //get context for Helper classes
+        new BlockchainInfoHelper(this);
+        new UpdateDbHelper(this);
         /*
             Assigning view variables to their respective view in xml
             by findViewByID method

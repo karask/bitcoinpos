@@ -12,9 +12,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-/**
- * Created by kostas on 27/7/2016.
- */
+
 public class DateUtilities {
 
     public final static String DATABASE_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
