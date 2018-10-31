@@ -9,7 +9,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 27
         versionCode 16
-        versionName "1.5.2"
+        versionName "1.6.0"
 
         multiDexEnabled true
     }
@@ -38,16 +38,16 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:multidex:1.0.1'
-    compile 'com.android.support:appcompat-v7:27.1.0'
-    compile 'com.android.support:preference-v7:27.1.0'
-    compile 'com.android.support:support-v4:27.1.0'
-    compile 'com.android.support:design:27.1.0'
-    compile 'com.android.support:gridlayout-v7:27.1.0'
-    compile 'com.android.support:percent:27.1.0'
+    compile 'com.android.support:appcompat-v7:27.1.1'
+    compile 'com.android.support:preference-v7:27.1.1'
+    compile 'com.android.support:support-v4:27.1.1'
+    compile 'com.android.support:design:27.1.1'
+    compile 'com.android.support:gridlayout-v7:27.1.1'
+    compile 'com.android.support:percent:27.1.1'
     compile 'com.android.volley:volley:1.1.0'
     compile 'com.google.zxing:core:3.3.0'
     compile('com.journeyapps:zxing-android-embedded:3.6.0@aar') {transitive = false}
-    compile 'com.android.support:recyclerview-v7:27.1.0'
+    compile 'com.android.support:recyclerview-v7:27.1.1'
     compile 'com.github.amlcurran.showcaseview:library:5.4.3'
     compile 'com.opencsv:opencsv:4.2'
 }

@@ -85,7 +85,7 @@ public class UpdateDbHelper {
                                String createdAt, String confirmedAt,
                                String merchantName, String bitcoinAddress,
                                int isConfirmed, String itemsNames,
-                               String exchangeRate) {
+                               String exchangeRate, String cryptocurrency) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         // make sure transaction entry does not already exist:  folder_name is null or
@@ -109,16 +109,17 @@ public class UpdateDbHelper {
             else {
                 values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID, txId);
             }
-            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btcAmount);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT, btcAmount);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, localAmount);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY, localCurrency);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT, createdAt);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_MERCHANT_NAME, merchantName);
-            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS, bitcoinAddress);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_ADDRESS, bitcoinAddress);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS, isConfirmed);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_PRODUCT_NAME, itemsNames);
             values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE, exchangeRate);
+            values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY, cryptocurrency);
             db.insert(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, null, values);
 
             rowId = getRowIdFromDb();
@@ -219,9 +220,10 @@ public class UpdateDbHelper {
                 PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
-                "_ROWID_"};// getting also _ROWID_ to save the txID after getting the response
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_ADDRESS,
+                "_ROWID_", //// getting also _ROWID_ to save the txID after getting the response
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY};
 
         String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
         Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, null, null, null, null, sortOrder);
@@ -262,13 +264,13 @@ public class UpdateDbHelper {
 
         // get the following columns:
         String[] tableColumns = {
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_ADDRESS,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS};//
 
-        String selection = PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT + " = ? AND " + PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS + " = ? " + " AND (" + PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS + " = ? OR " + PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS + " = ?)";
+        String selection = PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT + " = ? AND " + PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_ADDRESS + " = ? " + " AND (" + PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS + " = ? OR " + PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS + " = ?)";
         String[] whereArgs = { String.valueOf(amount), bitcoinAddress, String.valueOf(TxStatus.PENDING), String.valueOf(TxStatus.ONGOING) };
 
         Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, selection, whereArgs, null, null,null);

@@ -5,12 +5,15 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -22,6 +25,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,8 +38,11 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
 import gr.cryptocurrencies.bitcoinpos.database.TxStatus;
 import gr.cryptocurrencies.bitcoinpos.database.UpdateDbHelper;
+
 import gr.cryptocurrencies.bitcoinpos.network.BlockchainInfoHelper;
+import gr.cryptocurrencies.bitcoinpos.network.BlockcypherHelper;
 import gr.cryptocurrencies.bitcoinpos.network.Requests;
+import gr.cryptocurrencies.bitcoinpos.network.RestBitcoinHelper;
 import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
 import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 
@@ -63,23 +71,25 @@ import java.util.TimerTask;
  */
 public class PaymentRequestFragment extends DialogFragment  {
 
-    private static final String ARG_BITCOIN_ADDRESS = "bitcoinAddress";
+    private static final String ARG_CRYPTOCURRENCY_ADDRESS = "cryptocurrencyAddress";
     private static final String ARG_MERCHANT_NAME = "merchantName";
     private static final String ARG_PRIMARY_AMOUNT = "primaryAmount";
     private static final String ARG_SECONDARY_AMOUNT = "secondaryAmount";
-    private static final String ARG_BITCOIN_IS_PRIMARY = "bitcoinIsPrimary";
+    private static final String ARG_CRYPTOCURRENCY_IS_PRIMARY = "cryptocurrencyIsPrimary";
     private static final String ARG_LOCAL_CURRENCY = "localCurrency";
     private static final String ARG_EXCHANGE_RATE = "exchangeRate";
     private static final String ARG_ITEMS_NAMES = "itemsNames";
+    private static final String ARG_CRYPTOCURRENCY = "cryptocurrency";
 
-    private String mBitcoinAddress;
+    private String mCryptocurrencyAddress;
     private String mMerchantName;
     private String mPrimaryAmount;
     private String mSecondaryAmount;
-    private boolean mBitcoinIsPrimary;
+    private boolean mCryptocurrencyIsPrimary;
     private String mLocalCurrency;
     private String mExchangeRate;
     private String mItemsNames;
+    private String mCryptocurrency;
 
     private ImageView mQrCodeImage;
     private Bitmap mQrCodeBitmap;
@@ -96,6 +106,9 @@ public class PaymentRequestFragment extends DialogFragment  {
     private Timer mTimer;
     private String mPaymentTransaction = null;
     private int _rowID;
+
+    SharedPreferences sharedPref;
+    RadioGroup radiogroup;
 
     private PointOfSaleDb mDbHelper;
 
@@ -130,17 +143,32 @@ public class PaymentRequestFragment extends DialogFragment  {
 
             //check status of transaction that has just been updated and update view
             if(UpdateDbHelper.queryDbTransactionStatusToRefreshView(rowID)==TxStatus.ONGOING){
-                mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
+                mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getActivity(), R.color.colorAccent));
                 mPaymentStatusTextView.setText(R.string.payment_unconfirmed);
 
                 mCancelButton.setText(getString(R.string.ok));//set cancel button text to ok
             }
             else if(UpdateDbHelper.queryDbTransactionStatusToRefreshView(rowID)==TxStatus.CONFIRMED){
-                mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.brightGreen));
+                mPaymentStatusTextView.setTextColor(ContextCompat.getColor(getActivity(), R.color.brightGreen));
                 mPaymentStatusTextView.setText(R.string.payment_confirmed);
                 //tx is confirmed and timer can be cancelled
                 mTimer.cancel();
             }
+        }
+    }
+
+    private class ShowSelected extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            return params[0];
+        }
+
+        @Override
+        public void onPostExecute(String rowId) {
+            //update view
+            //String selected = sharedPref.getString("selectedCrypto", String.valueOf(CurrencyUtils.CurrencyType.BTC));
+
+            //Toast.makeText(getActivity(), selected, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -159,36 +187,42 @@ public class PaymentRequestFragment extends DialogFragment  {
      * @return A new instance of fragment PaymentRequestFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount, boolean bitcoinIsPrimary, String localCurrency, String exchangeRate, String itemsNames) {
+    public static PaymentRequestFragment newInstance(String bitcoinAddress, String merchantName, String primaryAmount, String secondaryAmount, boolean bitcoinIsPrimary, String localCurrency, String exchangeRate, String itemsNames, String cryptocurrency) {
         PaymentRequestFragment fragment = new PaymentRequestFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_BITCOIN_ADDRESS, bitcoinAddress);
+        args.putString(ARG_CRYPTOCURRENCY_ADDRESS, bitcoinAddress);
         args.putString(ARG_MERCHANT_NAME, merchantName);
         args.putString(ARG_PRIMARY_AMOUNT, primaryAmount);
         args.putString(ARG_SECONDARY_AMOUNT, secondaryAmount);
-        args.putBoolean(ARG_BITCOIN_IS_PRIMARY, bitcoinIsPrimary);
+        args.putBoolean(ARG_CRYPTOCURRENCY_IS_PRIMARY, bitcoinIsPrimary);
         args.putString(ARG_LOCAL_CURRENCY, localCurrency);
         args.putString(ARG_EXCHANGE_RATE, exchangeRate);
         args.putString(ARG_ITEMS_NAMES, itemsNames);
+        args.putString(ARG_CRYPTOCURRENCY, cryptocurrency);
+
         fragment.setArguments(args);
         return fragment;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         if (getArguments() != null) {
-            mBitcoinAddress = getArguments().getString(ARG_BITCOIN_ADDRESS);
+            mCryptocurrencyAddress = getArguments().getString(ARG_CRYPTOCURRENCY_ADDRESS);
             mMerchantName = getArguments().getString(ARG_MERCHANT_NAME);
             mPrimaryAmount = getArguments().getString(ARG_PRIMARY_AMOUNT);
             mSecondaryAmount = getArguments().getString(ARG_SECONDARY_AMOUNT);
-            mBitcoinIsPrimary = getArguments().getBoolean(ARG_BITCOIN_IS_PRIMARY);
+            mCryptocurrencyIsPrimary = getArguments().getBoolean(ARG_CRYPTOCURRENCY_IS_PRIMARY);
             mLocalCurrency = getArguments().getString(ARG_LOCAL_CURRENCY);
             mExchangeRate = getArguments().getString(ARG_EXCHANGE_RATE);
             mItemsNames = getArguments().getString(ARG_ITEMS_NAMES);
+            mCryptocurrency = getArguments().getString(ARG_CRYPTOCURRENCY);
 
             mDbHelper = PointOfSaleDb.getInstance(getActivity());
+
 
             //Find screen size
             WindowManager manager = (WindowManager) getActivity().getSystemService(getContext().WINDOW_SERVICE);
@@ -200,11 +234,17 @@ public class PaymentRequestFragment extends DialogFragment  {
             int smallerDimension = width < height ? width : height;
             smallerDimension = smallerDimension * 3/4;
 
+            String uriCrypto;
+            if(mCryptocurrency.equals(getString(R.string.btc))){uriCrypto = getString(R.string.bitcoin);}
+            else if(mCryptocurrency.equals(getString(R.string.bch))){uriCrypto = getString(R.string.bitcoin_cash);}
+            else if(mCryptocurrency.equals(getString(R.string.ltc))){uriCrypto = getString(R.string.litecoin);}
+            else {uriCrypto = getString(R.string.bitcoin_testnet);}
             // generate QR code to show in image view
             try {
                 // generate BIP 21 compatible payment URI
-                String bip21Payment = "bitcoin:" + mBitcoinAddress +
-                        "?amount=" + (mBitcoinIsPrimary ? mPrimaryAmount : mSecondaryAmount) +
+
+                String bip21Payment = uriCrypto + ":" + mCryptocurrencyAddress +
+                        "?amount=" + (mCryptocurrencyIsPrimary ? mPrimaryAmount : mSecondaryAmount) +
                         "&label=" + URLEncoder.encode(mMerchantName, "UTF-8");
                 mQrCodeBitmap = encodeAsBitmap(bip21Payment, smallerDimension); //(mBitcoinAddress);
             } catch (WriterException we) {
@@ -215,7 +255,7 @@ public class PaymentRequestFragment extends DialogFragment  {
 
             //set the correct value to btc and local currency for the transaction
             Double setPrimary, setSecondary;
-            if(mBitcoinIsPrimary){
+            if(mCryptocurrencyIsPrimary){
                 setPrimary = Double.parseDouble(mPrimaryAmount);
                 setSecondary = Double.parseDouble(mSecondaryAmount);
             }
@@ -227,18 +267,31 @@ public class PaymentRequestFragment extends DialogFragment  {
             //get system time and convert to UNIX Epoch to get the created time of the transaction
             int systemTimeNow = (int) (System.currentTimeMillis()/1000);
 
+            radiogroup = (RadioGroup) getActivity().findViewById(R.id.radiogroup);
+            View radioButton = radiogroup.findViewById(radiogroup.getCheckedRadioButtonId());
+            selected = radiogroup.indexOfChild(radioButton);
+
+            String cryptocurrency="";
+            if(selected==0){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTC); }
+            else if(selected==1){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BCH);}
+            else if(selected==2){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.LTC);}
+            else if(selected==3){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTCTEST);}
+
+            //Toast.makeText(getActivity(), String.valueOf(selected), Toast.LENGTH_SHORT).show();
+
             final int rowID = UpdateDbHelper.addTransaction(mPaymentTransaction, setPrimary, setSecondary, mLocalCurrency,
-                    String.valueOf(systemTimeNow), null, mMerchantName, mBitcoinAddress, TxStatus.PENDING, // payment is requested and the transaction is set to pending
-                    mItemsNames, mExchangeRate);
+                    String.valueOf(systemTimeNow), null, mMerchantName, mCryptocurrencyAddress, TxStatus.PENDING, // payment is requested and the transaction is set to pending
+                    mItemsNames, mExchangeRate, cryptocurrency);
 
             _rowID = rowID;
 
             BlockchainInfoHelper.sendBroadcast();
             //send broadcast to update History View
+
             
         }
     }
-
+    int selected;
     @Override
     public void onResume() {
         super.onResume();
@@ -247,14 +300,14 @@ public class PaymentRequestFragment extends DialogFragment  {
         getActivity().registerReceiver(mReceiver,
                 new IntentFilter(BlockchainInfoHelper.CUSTOM_BROADCAST_ACTION));
 
-
         // setup timer to check network for unconfirmed/confirmed transactions
         mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
+                //new ShowSelected().execute("");
                 double amount;
-                if (mBitcoinIsPrimary) {
+                if (mCryptocurrencyIsPrimary) {
                     amount = Double.parseDouble(mPrimaryAmount);
                 } else {
                     amount = Double.parseDouble(mSecondaryAmount);
@@ -264,11 +317,48 @@ public class PaymentRequestFragment extends DialogFragment  {
                 int timeNowEpoch = (int) (System.currentTimeMillis()/1000);//IMPORTANT USE PARENTHESIS!!
                 if (mPaymentTransaction == null) {
                     Log.d("CHECK FOR ONG/CONFIRM", amount + "!");
-
-                    BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed(mBitcoinAddress,amountSatoshi,_rowID,timeNowEpoch);
+                    boolean mainNet;
+                    switch (selected) {
+                        case 0://radiobutton 1 , BTC
+                            mainNet = true;
+                            BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch, mainNet);
+                        break;
+                        case 1://radiobutton 1 , BTC
+                            mainNet = true;
+                            RestBitcoinHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch, mainNet);
+                            break;
+                        case 2:
+                            mainNet=true;
+                            BlockcypherHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch);
+                            break;
+                        case 3://radiobutton 5 , BTC TESTNET
+                            mainNet = false;
+                            BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch, mainNet);
+                            break;
+                    }
                 } else {
                     Log.d("CHECK FOR CONFIRMED", mPaymentTransaction);
-                    BlockchainInfoHelper.updateOngoingTxToConfirmedByTxId(mPaymentTransaction,mBitcoinAddress);
+
+                    boolean mainNet;
+                    switch (selected) {
+                        case 0://radiobutton 1 , BTC
+                            mainNet = true;
+                            BlockchainInfoHelper.updateOngoingTxToConfirmedByTxId(mPaymentTransaction, mCryptocurrencyAddress, mainNet);
+                            break;
+                        case 1://radiobutton 1 , BCH
+                            mainNet = true;
+                            RestBitcoinHelper.updateOngoingTxToConfirmedByTxId(mPaymentTransaction, mCryptocurrencyAddress);
+                            break;
+                        case 2://radiobutton 1 , LTC
+                            mainNet = true;
+                            BlockcypherHelper.updateOngoingTxToConfirmedByTxId(mPaymentTransaction, mCryptocurrencyAddress);
+                            break;
+                        case 3://radiobutton 1 , BTC TEST
+                            mainNet = false;
+                            BlockchainInfoHelper.updateOngoingTxToConfirmedByTxId(mPaymentTransaction, mCryptocurrencyAddress, mainNet);
+                            break;
+
+                    }
                 }
             }
         }, 0, 3000);
@@ -298,17 +388,19 @@ public class PaymentRequestFragment extends DialogFragment  {
         mBitcoinAddressTextView = (TextView) fragmentView.findViewById(R.id.bitcoin_address);
         mBitcoinAddressTextView.setTextColor(ContextCompat.getColor(getContext(), android.R.color.black));
         mBitcoinAddressTextView.setTextSize(getResources().getDimension(R.dimen.button_text_size_small));
-        mBitcoinAddressTextView.setText(mBitcoinAddress);
+        mBitcoinAddressTextView.setText(mCryptocurrencyAddress);
 
         // TODO put "BTC" in strings.xml
 
         String primaryAmountToDisplay, secondaryAmountToDisplay;
-        if (mBitcoinIsPrimary) {
-            primaryAmountToDisplay = mPrimaryAmount + " " + String.valueOf(CurrencyUtils.CurrencyType.BTC);
+        if (mCryptocurrencyIsPrimary) {
+            //primaryAmountToDisplay = mPrimaryAmount + " " + String.valueOf(CurrencyUtils.CurrencyType.BTC);
+            primaryAmountToDisplay = mPrimaryAmount + " " + mCryptocurrency;
             secondaryAmountToDisplay = "(" + mSecondaryAmount + " " + mLocalCurrency + ")";
         } else {
             primaryAmountToDisplay = mPrimaryAmount + " " + mLocalCurrency;
-            secondaryAmountToDisplay = "(" + mSecondaryAmount + " " +String.valueOf(CurrencyUtils.CurrencyType.BTC) + ")";
+            //secondaryAmountToDisplay = "(" + mSecondaryAmount + " " +String.valueOf(CurrencyUtils.CurrencyType.BTC) + ")";
+            secondaryAmountToDisplay = "(" + mSecondaryAmount + " " + mCryptocurrency + ")";
         }
 
         mPrimaryAmountTextView = (TextView) fragmentView.findViewById(R.id.primary_amount);
@@ -335,6 +427,7 @@ public class PaymentRequestFragment extends DialogFragment  {
 
         mQrCodeImage = (ImageView) fragmentView.findViewById(R.id.qr_code_image);
         mQrCodeImage.setImageBitmap(mQrCodeBitmap);
+
 
         return fragmentView;
     }

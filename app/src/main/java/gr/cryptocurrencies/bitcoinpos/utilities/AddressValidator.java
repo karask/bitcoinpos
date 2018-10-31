@@ -1,13 +1,23 @@
 package gr.cryptocurrencies.bitcoinpos.utilities;
 
 
+import android.content.Context;
+
+import android.widget.Toast;
+
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-public class BitcoinAddressValidator {
 
+
+public class AddressValidator {
+
+    public AddressValidator(Context context){
+        this.context=context;
+    }
+    private static Context context;
 
     private static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
 
@@ -35,8 +45,8 @@ public class BitcoinAddressValidator {
     // easy way to change between testnet and mainnet for development only
     public static boolean isMainNet(String btcAddress) {
 
-//        if(btcAddress.startsWith("m")||btcAddress.startsWith("n"))
-//        {return false;}
+        //if(btcAddress.startsWith("m")||btcAddress.startsWith("n"))
+        //{return false;}
         //finding if address is testnet, for development only
         //requires String address to be passed to method
 
@@ -50,35 +60,68 @@ public class BitcoinAddressValidator {
     }
 
     public static String getAddressFromBip21String(String addressString) {
-        int bitcoinUriIndex = addressString.indexOf(":");
+        int cryptoUriIndex = addressString.indexOf(":");
         int paramsIndex = addressString.indexOf("?");
 
-        if(bitcoinUriIndex != -1) {
+        if(cryptoUriIndex != -1) {
             // get address from bitcoin uri scheme
             if(paramsIndex != -1)
-                return addressString.substring(bitcoinUriIndex + 1, paramsIndex);
+                return addressString.substring(cryptoUriIndex + 1, paramsIndex);
             else
-                return addressString.substring(bitcoinUriIndex + 1);
+                return addressString.substring(cryptoUriIndex + 1);
         } else {
             // not using BIP 21
             return addressString;
         }
     }
 
-    public static boolean validate(String addr) {
-        // if testnet do not validate
-        if(!isMainNet(addr)){
-            return true;
+    public static boolean validate(String addr, String cryptocurrency) {
+
+
+        if(cryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
+            try {
+                int addressHeader = getAddressHeader(addr);
+                //Toast.makeText(context, String.valueOf(addressHeader), Toast.LENGTH_SHORT).show();
+                return ( addressHeader == 0 || addressHeader == 5 );
+
+            } catch (Exception x) {
+                x.printStackTrace();
+            }
         }
+        else if(cryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))) {
 
-        try {
-            int addressHeader = getAddressHeader(addr);
-            return (addressHeader == 0 || addressHeader == 5);
-        } catch (Exception x) {
-            x.printStackTrace();
+            //bitcoin cash address return true
+//            if (addr.startsWith("q") || addr.startsWith("p") || addr.startsWith("1") || addr.startsWith("3")) {
+//                return true;
+//            }
+
+            try {
+                int addressHeader = getAddressHeader(addr);
+                return ( addressHeader == 0 || addressHeader == 5 );
+
+            } catch (Exception x) {
+                x.printStackTrace();
+            }
+
         }
+        else if (cryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))){
+            try {
+                int addressHeader = getAddressHeader(addr);
+                return ( addressHeader == 0 || addressHeader == 5 || addressHeader == 48 || addressHeader == 50);
+                                                           //addresses starting with //L//  and  /////////////M/
+            } catch (Exception x) {
+                x.printStackTrace();
+            }
+        }
+        else if(cryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))){
+            try {
+                int addressHeader = getAddressHeader(addr);
+                return ( addressHeader == 111 || addressHeader == 196 );
 
-
+            } catch (Exception x) {
+                x.printStackTrace();
+            }
+        }
 
         return false;
     }

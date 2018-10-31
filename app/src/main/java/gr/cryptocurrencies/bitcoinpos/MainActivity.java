@@ -1,6 +1,9 @@
 package gr.cryptocurrencies.bitcoinpos;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
@@ -12,6 +15,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 
+import android.widget.Toast;
+
 import java.util.Date;
 
 import gr.cryptocurrencies.bitcoinpos.database.Item;
@@ -19,7 +24,8 @@ import gr.cryptocurrencies.bitcoinpos.database.ItemHelper;
 import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
 import gr.cryptocurrencies.bitcoinpos.database.UpdateDbHelper;
 import gr.cryptocurrencies.bitcoinpos.network.BlockchainInfoHelper;
-
+import gr.cryptocurrencies.bitcoinpos.network.BlockcypherHelper;
+import gr.cryptocurrencies.bitcoinpos.network.RestBitcoinHelper;
 import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 
 public class MainActivity extends AppCompatActivity implements PaymentRequestFragment.OnFragmentInteractionListener,
@@ -34,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
     private ViewPager mViewPager;
     private ViewPagerAdapter mViewPagerAdapter;
 
+
     public ViewPager getmViewPager() {
         return mViewPager;
     }
@@ -44,8 +51,15 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
         setContentView(R.layout.activity_main);
 
         //get context for Helper classes
-        new BlockchainInfoHelper(this);
         new UpdateDbHelper(this);
+
+        new BlockchainInfoHelper(this);
+        new BlockcypherHelper(this);
+        new RestBitcoinHelper(this);
+
+
+        //this.deleteDatabase("History.db");
+
         /*
             Assigning view variables to their respective view in xml
             by findViewByID method
@@ -141,6 +155,10 @@ public class MainActivity extends AppCompatActivity implements PaymentRequestFra
         mViewPager.setCurrentItem(1);
 
     }
+
+
+
+
 
 
 //    @Override

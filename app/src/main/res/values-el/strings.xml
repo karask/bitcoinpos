@@ -56,14 +56,15 @@
     </string-array>
 
     <string name="action_about">Σχετικά</string>
-    <string name="add_payment_address_message">Παρακαλώ σαρώστε ένα QR κωδικό με Bitcoin διεύθυνση ή πληκτρολογήστε μια διεύθυνση.</string>
+    <string name="add_payment_address_message">Παρακαλώ σαρώστε ένα QR κωδικό με την διεύθυνση κρυπτονομίσματος ή πληκτρολογήστε μια διεύθυνση.</string>
     <string name="add_payment_address_title">Προσθήκη διεύθυνσης πληρωμής</string>
     <string name="amount_needs_to_be_positive">Το συνολικό ποσό πρέπει να είναι θετικό</string>
     <string name="amount_has_more_decimals_than_allowed">Έχετε φτάσει το όριο για τα δεκαδικά που επιτρέπονται για το νόμισμα!</string>
-    <string name="amount_less_than_10000_message">Η αξία του ποσού πρέπει να είναι λιγότερο από 10000 BTC !</string>
+    <string name="amount_less_than_10000_message">Η αξία του ποσού πρέπει να είναι λιγότερο από 10000 μονάδες κρυπτονομίσματος !</string>
     <string name="default_currency_code">EUR</string>
     <string name="history">Ιστορικό</string>
-    <string name="invalid_bitcoin_address_message">Αυτή δεν ήταν έγκυρη Bitcoin διεύθυνση</string>
+    <!--<string name="invalid_bitcoin_address_message">Αυτή δεν ήταν έγκυρη Bitcoin διεύθυνση</string>-->
+    <string name="invalid_address_message">Αυτή δεν ήταν έγκυρη διεύθυνση κρυπτονομίσματος</string>
     <string name="konstantinos_karasavvas">Κωνσταντίνος Καρασάββας</string>
     <string name="local_currency">Τοπικό νόμισμα</string>
     <string name="merchant_name">Όνομα καταστήματος</string>
@@ -71,7 +72,8 @@
     <string name="no_transaction_yet">Δεν έγινε καμία συναλλαγή ακόμα.</string>
     <string name="ok">Εντάξει</string>
     <string name="paste">Πληκτρολόγηση</string>
-    <string name="paste_bitcoin_address_message">Παρακαλώ πληκτρολογήστε την Bitcoin διεύθυνσή σας.</string>
+    <!--<string name="paste_bitcoin_address_message">Παρακαλώ πληκτρολογήστε την Bitcoin διεύθυνσή σας.</string>-->
+    <string name="paste_address_message">Παρακαλώ πληκτρολογήστε για το επιλεγμένο κρυπτονόμισμα, την διεύθυνσή σας.</string>
     <string name="payment">Πληρωμή</string>
     <string name="payment_address">Διεύθυνση πληρωμής</string>
     <string name="payment_confirmed">Επιβεβαιωμένη</string>
@@ -84,7 +86,8 @@
     <string name="scan">Σάρωση</string>
     <string name="scan_qr_code">Σάρωση QR κωδικού</string>
     <string name="scan_qr_code_prompt">Σαρώστε ένα QR κωδικό με Bitcoin διεύθυνση</string>
-    <string name="specify_valid_bitcoin_address_message">Παρακαλώ ορίστε μία έγκυρη Bitcoin διεύθυνση για πληρωμές</string>
+    <!--<string name="specify_valid_bitcoin_address_message">Παρακαλώ ορίστε μία έγκυρη Bitcoin διεύθυνση για πληρωμές</string>-->
+    <string name="specify_valid_cryptocurrency_address_message">Παρακαλώ ορίστε μία έγκυρη διεύθυνση για το επιλεγμένο κρυπτονόμισμα έτσι ώστε να δέχεστε πληρωμές</string>
     <string name="updating_exchange_rates">Ενημερώνονται οι ισοτιμίες...</string>
     <string name="cancel">Ακύρωση</string>
     <string name="transactions_report">Αναφορά</string>
@@ -115,18 +118,38 @@
     <string name="remove_all">Αφαίρεση όλων</string>
     <string name="choose_item">Επιλέξτε ένα είδος</string>
     <string name="all_items_same_currency">Προς το παρόν, όλα τα είδη στο καλάθι πρέπει να είναι στο ίδιο νόμισμα</string>
-    <string name="exchange_rate">Ισοτιμία συναλλάγματος: Blockchain.Info</string>
+    <string name="exchange_rate">Ισοτιμία συναλλάγματος: Blockchain.Info, Cryptocompare.com</string>
     <string name="copied_bitcoin_address">Η διεύθυνση αποθηκεύτηκε στο πρόχειρο!</string>
 
     <string name="transaction_id">Αναγνωριστικό συναλλαγής</string>
     <string name="transaction_status">Εξέλιξη συναλλαγής</string>
     <string name="other_pending_or_ongoing_transaction_title">Βρέθηκε εκκρεμής ή σε εξέλιξη συναλλαγή</string>
-    <string name="other_pending_or_ongoing_transaction_found_message">"Υπάρχει ήδη εκκρεμής ή σε εξέλιξη συναλλαγή για το ποσό που ζητήθηκε να πληρωθεί στη συγκεκριμένη Bitcoin διεύθυνση πληρωμής. Η συναλλαγή αυτή θα πρέπει να επιβεβαιωθεί έτσι ώστε να μπορεί να δημιουργηθεί νέα συναλλαγή για το ποσό που ζητήθηκε.
+    <string name="other_pending_or_ongoing_transaction_found_message">"Υπάρχει ήδη εκκρεμής ή σε εξέλιξη συναλλαγή για το ποσό που ζητήθηκε να πληρωθεί στη συγκεκριμένη διεύθυνση πληρωμής. Η συναλλαγή αυτή θα πρέπει να επιβεβαιωθεί έτσι ώστε να μπορεί να δημιουργηθεί νέα συναλλαγή για το ποσό που ζητήθηκε.
 </string>
 
     <string name="yes">Ναι</string>
     <string name="no">Όχι</string>
     <string name="no_id">Χωρίς αναγνωριστικό</string>
     <string name="delete_transaction_message">Θέλετε να διαγραφεί αυτή η συναλλαγή;</string>
+
+    <string name="select_cryptocurrency">Επιλέξτε το νόμισμα στο οποίο θα δέχεστε πληρωμές:</string>
+
+
+    <string name="payment_amount">Ποσό πληρωμής</string>
+
+    <string name="payment_address_btc">Διεύθυνση πληρωμής Bitcoin</string>
+    <string name="payment_address_ltc">Διεύθυνση πληρωμής Litecoin</string>
+    <string name="payment_address_btc_test">Διεύθ. πληρωμής Bitcoin Testnet</string>
+    <string name="payment_address_bch">Διεύθ. πληρωμής Bitcoin Cash</string>
+
+    <string name="bitcoin_tx_title">Συναλλαγή Bitcoin</string>
+    <string name="litecoin_tx_title">Συναλλαγή Litecoin</string>
+    <string name="bitcoin_cash_tx_title">Συναλλαγή Bitcoin Cash</string>
+    <string name="bitcoin_testnet_tx_title">Συναλλαγή Bitcoin Testnet</string>
+
+    <string name="accept_bitcoin_testnet_address_title">Διευθύνσεις Bitcoin Testnet</string>
+    <string name="accept_bitcoin_testnet_address_summary">Ενεργοποίηση για καταχώρηση Bitcoin Testnet διευθύνσεων για δοκιμαστικές πληρωμές</string>
+
+
 
 </resources>
