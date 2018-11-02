@@ -1,16 +1,23 @@
 package gr.cryptocurrencies.bitcoinpos;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
@@ -21,22 +28,21 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.DatePicker;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
-import gr.cryptocurrencies.bitcoinpos.network.Requests;
-import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
+import gr.cryptocurrencies.bitcoinpos.database.TxStatus;
+import gr.cryptocurrencies.bitcoinpos.database.UpdateDbHelper;
+import gr.cryptocurrencies.bitcoinpos.network.BlockchainInfoHelper;
+
+import gr.cryptocurrencies.bitcoinpos.network.BlockcypherHelper;
+import gr.cryptocurrencies.bitcoinpos.network.RestBitcoinHelper;
+import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.opencsv.CSVWriter;
 
@@ -45,7 +51,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,22 +61,42 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
-/**
- * Created by kostas on 14/6/2016.
- */
-public class HistoryFragment extends ListFragment implements FragmentIsNowVisible, SwipeRefreshLayout.OnRefreshListener {
+
+public class HistoryFragment extends ListFragment implements FragmentIsNowVisible { //SwipeRefreshLayout.OnRefreshListener
 
     private PointOfSaleDb mDbHelper;
     private List<HashMap<String,String>> mTransactionHistoryItemList;
     private SwipeRefreshLayout mSwipeLayout;
 
+    private Timer mTimer;
+    private SharedPreferences sharedPref;
+
+    private String mLocalCurrency=null;
+    private boolean acceptTestnet;
+
     // datepicker values
     private int mStartYear, mStartMonth, mEndYear, mEndMonth;
-
+    private int secondsAfterTxCreatedToCancel=3600;
+    private int millisecondsIntervalToRefreshView=5000;
     // Write external storage permission code
     final private int WRITE_EXTERNAL_PERMISSION_CODE = 123;
+
+    public BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(BlockchainInfoHelper.CUSTOM_BROADCAST_ACTION.equals(action)) {
+
+                new RefreshHistoryView().execute("");
+                //using this async task to update view, needs to pass an empty string
+            }
+        }
+    };
 
     public HistoryFragment () {
         // Required empty public constructor
@@ -78,30 +106,56 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        //getting shared preferences
+        //using getActivity instead of getContext, getContext was added in API 23
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mLocalCurrency = sharedPref.getString(getString(R.string.local_currency_key), getString(R.string.default_currency_code));
+        acceptTestnet = sharedPref.getBoolean(getString(R.string.accept_testnet_key), false);
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
+        //refresh view
+        updateTransactionHistoryFromCursor(UpdateDbHelper.getTransactionHistoryDbCursor());
         updateTransactionHistoryView();
+
+        //set broadcast receiver to update history view when broadcast is received
+        getActivity().registerReceiver(mReceiver,
+                new IntentFilter(BlockchainInfoHelper.CUSTOM_BROADCAST_ACTION));
+
         // set invalid dates for report export
         mStartYear = -1;
         mStartMonth = -1;
         mEndYear = -1;
         mEndMonth = -1;
+
+        // timer runs and updates the database //transferred from onCreate //is cancelled at onStop
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Log.d("HISTORY UPDATE", "Updating transaction history items!");
+                updateStatusTx(UpdateDbHelper.getTransactionHistoryDbCursor());
+                //update database items, if a change has happened to the status of a transaction, the history view is updated also
+
+            }
+        }, 1, millisecondsIntervalToRefreshView);
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View fragmentView = inflater.inflate(R.layout.fragment_history, container, false);
-        mSwipeLayout = (SwipeRefreshLayout) fragmentView.findViewById(R.id.history_swipe_container);
-        mSwipeLayout.setOnRefreshListener(this);
-        mSwipeLayout.setColorSchemeResources(
-                R.color.colorPrimary,
-                R.color.colorAccent,
-                R.color.colorPrimaryDark);
+        // SwipeRefreshLayout removed
+//        mSwipeLayout = (SwipeRefreshLayout) fragmentView.findViewById(R.id.history_swipe_container);
+//        mSwipeLayout.setOnRefreshListener(this);
+//        mSwipeLayout.setColorSchemeResources(
+//                R.color.colorPrimary,
+//                R.color.colorAccent,
+//                R.color.colorPrimaryDark);
 
         return fragmentView;
     }
@@ -115,59 +169,106 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
     }
 
     // implementing SwipeRefreshLayout.OnRefreshListener
-    @Override
-    public void onRefresh() {
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("HISTORY UPDATE", "Updating transaction history items!");
-                updateConfirmedStatusTx(getTransactionHistoryDbCursor());
-//                updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
-//                updateTransactionHistoryView();
-                mSwipeLayout.setRefreshing(false);
-            }
-        }, 2000);
-    }
+//    @Override
+//    public void onRefresh() {
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                Log.d("HISTORY UPDATE", "Updating transaction history items!");
+//                updateStatusTx(UpdateDbHelper.getTransactionHistoryDbCursor());
+//                //update database items, if a change has happened to the status of a transaction, the history view is updated also
+//
+//                mSwipeLayout.setRefreshing(false);
+//            }
+//        }, 2000);
+//    }
 
 
+    private class RefreshHistoryView extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            return params[0];
+        }
 
-    private void updateConfirmedStatusTx(Cursor c) {
-        // for each unconfirmed transaction check if confirmed
-        if(c.moveToFirst()) {
-            do {
-                if ("0".equals(c.getString(4))) {
-                    String txId = c.getString(0);
-                    String bitcoinAddress = c.getString(6);
-                    double btcAmount = c.getDouble(5);
-                    updateIfTxConfirmed(txId, bitcoinAddress, btcAmount);
-
-                }
-            } while (c.moveToNext());
+        @Override
+        public void onPostExecute(String result) {
+            //get all database items, sort by date, create listview and update view
+            updateTransactionHistoryFromCursor(UpdateDbHelper.getTransactionHistoryDbCursor());
+            updateTransactionHistoryView();
 
         }
     }
 
 
-    private Cursor getTransactionHistoryDbCursor() {
-        // get DB helper
-        mDbHelper = PointOfSaleDb.getInstance(getContext());
+    private void updateStatusTx(Cursor c) {
 
-        // Each row in the list stores amount and date of transaction -- retrieves history from DB
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        if(c.moveToFirst()) {
 
-        // get the following columns:
-        String[] tableColumns = { PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS };
+            do {
+                if ("0".equals(c.getString(4))) {//ongoing transaction
+                    String txId = c.getString(0);
+                    String bitcoinAddress = c.getString(6);
+                    //double btcAmount = c.getDouble(5);
+                    //double amountSatoshi = btcAmount * 100000000;
+                    String crypto = c.getString(8);
+                    if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
+                        boolean mainNet=true;
+                        BlockchainInfoHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress,mainNet);
+                    }
+                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))) {
+                        boolean mainNet=false;
+                        BlockchainInfoHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress,mainNet);
+                    }
+                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))) {
+                        BlockcypherHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress);
+                    }
+                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))) {
+                        RestBitcoinHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress);
+                    }
 
-        String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
-        Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, null, null, null, null, sortOrder);
+                }
+                else if ("1".equals(c.getString(4))){//confirmed transaction
+                    //tx is confirmed
+                }
+                else if ("2".equals(c.getString(4))) {//pending transaction
+                    int timeUnixEpoch = Integer.parseInt(c.getString(3));//createdAt time
+                    int timeDevice = (int) (System.currentTimeMillis()/1000);// get current time to check for cancelled transactions
 
-        return c;
+                    //getting row id for checking pending transactions that dont have txID, when checked the transaction is updated and the txId is set
+                    int rowId = c.getInt(7);
+
+                    String bitcoinAddress = c.getString(6);
+                    double btcAmount = c.getDouble(5);
+                    int amountSatoshi = (int) Math.round(btcAmount * 100000000);//getting INT from DOUBLE value that was saved before, for precise value of satoshis
+
+                    String crypto = c.getString(8);// get saved cryptocurrency from db
+
+                    if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
+                        boolean mainNet = true;
+                        BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch, mainNet );
+                    }
+                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))) {
+                        boolean mainNet = false;
+                        BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch, mainNet );
+                    }
+                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))) {
+                        BlockcypherHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch );
+                    }
+                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))) {
+                        boolean mainNet = true;
+                        RestBitcoinHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch, mainNet );
+                    }
+
+                    if(timeDevice-timeUnixEpoch>secondsAfterTxCreatedToCancel){
+                        UpdateDbHelper.updateDbTransaction(null, null, rowId, TxStatus.PENDING,TxStatus.CANCELLED);
+                    }
+
+                }
+
+            } while (c.moveToNext());
+
+        }
+
     }
 
 
@@ -182,16 +283,32 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 // Get BTC double value and convert to string without scientific notation
                 DecimalFormat df = new DecimalFormat("#.########");
                 String btc8DecimalAmount = df.format(c.getDouble(5));
+                String cryptoAcronym = c.getString(8);
+
+                int isConfirmedImage;
+                if("1".equals(c.getString(4))) {
+                    isConfirmedImage = R.drawable.ic_tick_green_24dp;
+                }
+                else if("2".equals(c.getString(4))){
+                    isConfirmedImage = R.drawable.ic_tx;
+                }
+                else if("3".equals(c.getString(4))){
+                    isConfirmedImage = R.drawable.ic_x;
+                }
+                else {
+                    isConfirmedImage = R.drawable.ic_warning_orange_24dp;
+                }
+
 
                 //item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID, c.getString(0));
                 item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, c.getString(1) + " " + c.getString(2));
-                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT, btc8DecimalAmount + " BTC");
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT, btc8DecimalAmount + " " + cryptoAcronym);
                 item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT, DateUtilities.getRelativeTimeString(c.getString(3)));
-
-                int isConfirmedImage = "1".equals(c.getString(4)) ? R.drawable.ic_tick_green_24dp : R.drawable.ic_warning_orange_24dp;
-                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, Integer.toString(isConfirmedImage));
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS, Integer.toString(isConfirmedImage));
 
                 mTransactionHistoryItemList.add(item);
+
+
             } while (c.moveToNext());
         }
 
@@ -203,9 +320,9 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         // define key strings in hashmap
         String[] from = {
                 PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED
+                PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS
         };
 
         // define ids of view in list view fragment to bind to
@@ -220,78 +337,6 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         }
 
     }
-
-
-    // TODO USED from both here and PaymentRequestFragment ... move to another class that represents Blockchain.Info API !!!
-    private void updateIfTxConfirmed(final String tx, final String bitcoinAddress, final double amount) {
-        String url;
-        if(BitcoinUtils.isMainNet()) {
-            url = "https://blockchain.info/rawaddr/" + bitcoinAddress;
-        } else {
-            url = "https://testnet.blockchain.info/rawaddr/" + bitcoinAddress;
-        }
-
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d("CONFIRMED TX 2", response.toString());
-                        try {
-                            if(response.has("address") && response.getString("address").equals(bitcoinAddress)) {
-                                JSONArray allTxs = (JSONArray) response.getJSONArray("txs");
-                                JSONObject ongoingTx;
-                                for(int i=0; i<allTxs.length(); i++) {
-                                    JSONObject trx = (JSONObject) allTxs.get(i);
-                                    if (trx.getString("hash").equals(tx) && trx.has("block_height")) {
-                                        // transaction was confirmed / update transaction history
-                                        String confirmedAt = trx.getString("time");
-                                        if (updateTransactionToConfirmed(tx, confirmedAt)) {
-                                            updateTransactionHistoryFromCursor(getTransactionHistoryDbCursor());
-                                            updateTransactionHistoryView();
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("CONFIRMED TX ERROR 2", error.toString());
-                    }
-                });
-
-        Requests.getInstance(getContext()).addToRequestQueue(jsObjRequest);
-
-
-    }
-
-
-    // TODO DB method REPEATED AGAIN here and in PaymentRequestFragment !!!
-    private boolean updateTransactionToConfirmed(String txId, String confirmedAt) {
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED, true);
-        values.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CONFIRMED_AT, confirmedAt);
-
-        // row to update
-        String selection = PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID + " LIKE ?";
-        String[] selectioinArgs = {String.valueOf(txId) };
-
-
-        int count = db.update(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, values, selection, selectioinArgs);
-        if(count > 0)
-            return true;
-        else
-            return false;
-    }
-
 
 
     @Override
@@ -312,7 +357,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
     private void getTransactionsReport() {
         if(mTransactionHistoryItemList.size() == 0) {
-            Toast.makeText(getContext(), getString(R.string.no_transaction_yet), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), getString(R.string.no_transaction_yet), Toast.LENGTH_SHORT).show();
         } else {
             showDatePicker();
         }
@@ -332,21 +377,22 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
     private Cursor getTransactionHistoryInRangeCursor(int startYear, int startMonth, int endYear, int endMonth) {
         // get DB helper
-        mDbHelper = PointOfSaleDb.getInstance(getContext());
+        mDbHelper = PointOfSaleDb.getInstance(getActivity());
 
         // Each row in the list stores amount and date of transaction -- retrieves history from DB
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
         // get the following columns:
         String[] tableColumns = { PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_AMOUNT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_CURRENCY,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_MERCHANT_NAME,
                 PointOfSaleDb.TRANSACTIONS_COLUMN_PRODUCT_NAME,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_BITCOIN_ADDRESS,
-                PointOfSaleDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE };
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_ADDRESS,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_EXCHANGE_RATE,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY };
 
         Calendar start = Calendar.getInstance();
         start.set(startYear, startMonth, 1, 0,0);
@@ -360,7 +406,8 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         //String paddedEndMonth = String.format("%02d", mEndMonth +1 +1);  // 2nd +1 for sql <= text comparison
         String whereClause = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " >= " + startInUnixTime + " and " +
                 PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " <= " + endInUnixTime + " and " +
-                PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED + " = 1";
+                PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS + " = 1";
+                //PointOfSaleDb.TRANSACTIONS_COLUMN_IS_CONFIRMED + " = 1"; // previously checking if transaction is confirmed (==1)
 
         String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
         Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, whereClause, null, null, null, sortOrder);
@@ -386,7 +433,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         ((ViewGroup) dpEndDate).findViewById(Resources.getSystem().getIdentifier("day", "id", "android")).setVisibility(View.GONE);
 
         // Build the dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(customView); // Set the view of the dialog to your custom layout
         builder.setTitle(getString(R.string.select_time_period));
         builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener(){
@@ -400,7 +447,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                     mEndMonth = dpEndDate.getMonth();
                     getStoragePermission();
                 } else {
-                    Toast.makeText(getContext(), R.string.date_range_not_valid, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), R.string.date_range_not_valid, Toast.LENGTH_SHORT).show();
                 }
                 dialog.dismiss();
             }
@@ -445,7 +492,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
             Cursor transactionsInRange = getTransactionHistoryInRangeCursor(mStartYear, mStartMonth, mEndYear, mEndMonth);
 
             if(transactionsInRange.getCount() == 0) {
-                Toast.makeText(getContext(), R.string.no_transactions_in_date_range, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), R.string.no_transactions_in_date_range, Toast.LENGTH_SHORT).show();
             } else {
                 if(Build.VERSION.SDK_INT < 23) {
                     exportReportInRange(mStartYear, mStartMonth, mEndYear, mEndMonth, transactionsInRange);
@@ -517,14 +564,15 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
             // add headers
             String[] headers = {
                     "Transaction Id",
-                    "Bitcoin Amount",
+                    "Cryptocurrency", // added Cryptocurrency column in .csv
+                    "Cryptocurrency Amount", //"Bitcoin Amount",
                     "Local Amount",
                     "Local Currency",
-                    "Exchange Rate (BTC->Local)",
+                    "Exchange Rate (Cryptocurrency->Local)", //"Exchange Rate (BTC->Local)",
                     "Created At (UTC)",
                     "Merchant Name",
                     "Product Name",
-                    "Bitcoin Address"
+                    "Cryptocurrency Address" // bitcoin address
             };
             writer.writeNext(headers);
 
@@ -548,6 +596,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
                     String[] row = {
                             c.getString(0),
+                            c.getString(9), // added Cryptocurrency column in .csv
                             btc8DecimalAmount,
                             c.getString(2),
                             c.getString(3),
@@ -555,7 +604,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                             DateUtilities.getRelativeTimeString(c.getString(4)),     // date
                             c.getString(5),                                 // merchant name
                             productName,
-                            c.getString(7)                                  // bitcoin address
+                            c.getString(7)                                  //cryptocurrency address // bitcoin address
                     };
 
                     writer.writeNext(row);
@@ -567,8 +616,8 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
             }
 
             // write total amount of bitcoins
-            String[] totalAmountString = { "Total in bitcoins: " + String.format("%.8f", totalBitcoins) };
-            writer.writeNext(totalAmountString);
+            //String[] totalAmountString = { "Total in bitcoins: " + String.format("%.8f", totalBitcoins) };
+            //writer.writeNext(totalAmountString);
 
             writer.close();
             osw.close();
@@ -583,15 +632,163 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
         Toast.makeText(getActivity(), getString(R.string.csv_file_saved, csvFile.getName()), Toast.LENGTH_LONG).show();
     }
 
-
-    // implementng FragmentIsNotVisible, our interface so that view pager can act when one of its fragments becomes visible
+    // implementing FragmentIsNotVisible, our interface so that view pager can act when one of its fragments becomes visible
     @Override
     public void doWhenFragmentBecomesVisible() {
-        Cursor c = getTransactionHistoryDbCursor();
-        updateConfirmedStatusTx(c);
-        updateTransactionHistoryFromCursor(c);
-        updateTransactionHistoryView();
+
     }
 
+
+
+    @Override
+    public void onPause(){
+        super.onPause();
+
+        if(mTimer != null){
+            mTimer.cancel();
+            //cancel timer task, assign null and stop checks
+        }
+
+        getActivity().unregisterReceiver(mReceiver);
+        //unregister the receiver when paused, we dont need to check for status changes
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        //setting listeners for click to show info about the selected tx and long click to show dialog and ask to delete the tx
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+            @Override
+            public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+                                           int arg2, long arg3) {
+                showDialogToDeleteTx(arg2);
+                return true;
+            }
+        });
+
+        getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                getTransactionsAfterClick(i);
+            }
+        });
+    }
+
+    private void showDialogToDeleteTx(final int selectedItem) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setMessage(getString(R.string.delete_transaction_message));
+        builder.setCancelable(true);
+
+        builder.setPositiveButton(
+                getString(R.string.yes),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //get method to delete transaction
+                        UpdateDbHelper.getTransactionsAndDeleteAfterLongClick(selectedItem);
+                    }
+                });
+
+        builder.setNegativeButton(
+                getString(R.string.no),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog alert11 = builder.create();
+        alert11.show();
+    }
+
+    private void showInfoDialog(String btcAddress, String txId, String status, String crypto, double amount) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        if(txId==null) {
+            txId = getString(R.string.no_id);
+        }
+
+        String title = getString(R.string.bitcoin_tx_title);
+        String acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.BTC);
+        String paymentCryptoType = String.valueOf(CurrencyUtils.CurrencyType.BTC);
+        if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
+            title = getString(R.string.bitcoin_tx_title);
+            acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.BTC);
+            paymentCryptoType = acronymCrypto;
+        }
+        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))) {
+            title = getString(R.string.bitcoin_cash_tx_title);
+            acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.BCH);
+            paymentCryptoType = acronymCrypto;
+        }
+        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))) {
+            title = getString(R.string.litecoin_tx_title);
+            acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.LTC);
+            paymentCryptoType = acronymCrypto;
+        }
+        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))) {
+            title = getString(R.string.bitcoin_testnet_tx_title);
+            acronymCrypto = getString(R.string.btctest);
+            paymentCryptoType = getString(R.string.bitcoin_testnet_show_in_title);
+        }
+
+
+        DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        String amountStr = formatter.format(amount);
+        String info = "\n" +getString(R.string.payment_address) + " (" + paymentCryptoType + ")" + ":\n" + btcAddress + "\n\n" + getString(R.string.transaction_id) + ":\n" + txId + "\n\n" +
+                getString(R.string.payment_amount) + ":\n" + amountStr + " " + acronymCrypto + "\n\n" + getString(R.string.transaction_status) + ":\n" + status;
+
+        builder.setTitle(title);
+        builder.setMessage(info);
+        builder.setCancelable(true);
+
+        builder.setPositiveButton(
+                "Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        getTransactionsAfterClick(id);
+                    }
+                });
+
+
+        AlertDialog alert11 = builder.create();
+        alert11.show();
+    }
+
+
+    //get transaction info to show in dialog after clicking on an item of the history listview
+    private void getTransactionsAfterClick(int selectedItem) {
+        // get DB helper
+        mDbHelper = PointOfSaleDb.getInstance(getActivity());
+
+        // Each row in the list stores amount and date of transaction -- retrieves history from DB
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        // get the following columns:
+        String[] tableColumns = { PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_ADDRESS,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS,
+                "_ROWID_",// getting also _ROWID_ to delete the selected tx
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY,
+                PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT    };
+
+        String sortOrder = PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT + " DESC";
+        Cursor c = db.query(PointOfSaleDb.TRANSACTIONS_TABLE_NAME, tableColumns, null, null, null, null, sortOrder);
+        //moving to position of the cursor according to the selected item to delete the transaction
+        if(c.moveToPosition(selectedItem)) {
+            String crypto = c.getString(5);
+            String status;
+            if(c.getInt(3)==0){status=getString(R.string.payment_unconfirmed);}
+            else if(c.getInt(3)==1){status=getString(R.string.payment_confirmed);}
+            else if(c.getInt(3)==2){status=getString(R.string.payment_pending);}
+            else {status=getString(R.string.payment_cancelled);}
+
+            double amount = c.getDouble(6);
+
+            //show dialog
+            showInfoDialog(c.getString(2),c.getString(1),status, crypto, amount);
+        }
+
+    }
 
 }

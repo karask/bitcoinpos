@@ -1,13 +1,19 @@
+
+
+
 package gr.cryptocurrencies.bitcoinpos.utilities;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-/**
- * Created by kostas on 24/6/2016.
- */
+
+
+//class BitcoinUtils obsolete, now using BitcoinAddressValidator
+
 public class BitcoinUtils {
+
+    /**
     private static BitcoinUtils ourInstance = new BitcoinUtils();
 
     public static BitcoinUtils getInstance() {
@@ -24,6 +30,15 @@ public class BitcoinUtils {
 
     // easy way to change between testnet and mainnet for development only
     public static boolean isMainNet() {
+        //return true;//mainnet
+        return false;
+        //false: using for testnet
+    }
+
+    public static boolean isNotTestnetAddress(String address){
+        if(address.startsWith("n")||address.startsWith("m")){
+            return false;
+        }
         return true;
     }
 
@@ -90,4 +105,8 @@ public class BitcoinUtils {
             return null;
         }
     }
+
+
+*/
+
 }

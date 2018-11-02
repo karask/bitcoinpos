@@ -2,14 +2,22 @@ package gr.cryptocurrencies.bitcoinpos;
 
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.PreferenceManager;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,24 +29,28 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import gr.cryptocurrencies.bitcoinpos.database.Item;
 import gr.cryptocurrencies.bitcoinpos.database.ItemHelper;
+import gr.cryptocurrencies.bitcoinpos.database.PointOfSaleDb;
+import gr.cryptocurrencies.bitcoinpos.database.TxStatus;
+import gr.cryptocurrencies.bitcoinpos.database.UpdateDbHelper;
 import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
 import gr.cryptocurrencies.bitcoinpos.network.Utilities;
-import gr.cryptocurrencies.bitcoinpos.utilities.BitcoinUtils;
+
+import gr.cryptocurrencies.bitcoinpos.utilities.AddressValidator;
 import gr.cryptocurrencies.bitcoinpos.utilities.CurrencyUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by kostas on 14/6/2016.
- */
+
 public class PaymentFragment extends Fragment implements View.OnClickListener, FragmentIsNowVisible {
 
     CoordinatorLayout coordinatorLayout;
@@ -52,41 +64,109 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
     SharedPreferences mSharedPreferences;
     String mLocalCurrency;
-    String mBitcoinPaymentAddress;
+    String mBitcoinPaymentAddress , mTestnetBitcoinPaymentAddress, mBitcoinCashPaymentAddress, mLitecoinPaymentAddress;
+    String selectedAddress;
+    String mSelectedCryptocurrencyToggleText;
     String mMerchantName;
+    String mSelectedCryptocurrency;
 
+    RadioGroup radioGroup;
+    int selectedCrypto=0;
+    boolean showSnackbar = false;
+
+    boolean testnetStatus= false;
+    boolean isTestnetAddress;
     List<Item> mItemsInCart = new ArrayList<>();
+    private PointOfSaleDb mDbHelper;
+
+    private int countCheckButtonChanges = 0;
 
     public PaymentFragment() {
         // Required empty public constructor
     }
+    View headerLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // get preferences
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        mLocalCurrency = mSharedPreferences.getString(getString(R.string.local_currency_key), getString(R.string.default_currency_code));
-        mBitcoinPaymentAddress = mSharedPreferences.getString(getString(R.string.payment_address_key), "");
-        mMerchantName = mSharedPreferences.getString(getString(R.string.merchant_name_key), "");
-
         // Inflate the layout for this fragment
         View fragmentView = inflater.inflate(R.layout.fragment_payment, container, false);
 
         coordinatorLayout = (CoordinatorLayout) fragmentView.findViewById(R.id.coordinatorLayout);
 
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view);
+        headerLayout = navigationView.getHeaderView(0);
+
+        radioGroup = (RadioGroup) headerLayout.findViewById(R.id.radiogroup) ;
+        testnetStatus = mSharedPreferences.getBoolean(getString(R.string.accept_testnet_key),false);
+        RadioButton radioButtonTestnet = (RadioButton) headerLayout.findViewById(R.id.radioButtonBtcTestnet);
+        if(!testnetStatus){
+            radioButtonTestnet.setVisibility(View.INVISIBLE);
+        }
+
+        selectedCrypto = mSharedPreferences.getInt(getString(R.string.navigation_crypto),0);
+
+        RadioButton radioButton = (RadioButton) radioGroup.getChildAt(selectedCrypto);
+        radioButton.setChecked(true);
+        setSelectedItemNavigationList(radioButton.getId());
+
+
+        // get preferences
+        mLocalCurrency = mSharedPreferences.getString(getString(R.string.local_currency_key), getString(R.string.default_currency_code));
+        mBitcoinPaymentAddress = mSharedPreferences.getString(getString(R.string.btc_payment_address_key), "");
+        mBitcoinCashPaymentAddress = mSharedPreferences.getString(getString(R.string.bch_payment_address_key),"");
+        mLitecoinPaymentAddress = mSharedPreferences.getString(getString(R.string.ltc_payment_address_key),"");
+        mTestnetBitcoinPaymentAddress = mSharedPreferences.getString(getString(R.string.btc_test_payment_address_key), "");
+
+
+        switch (selectedCrypto){
+            case 0:
+                mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTC);
+                mSelectedCryptocurrencyToggleText = mSelectedCryptocurrency;
+                selectedAddress = mBitcoinPaymentAddress;
+                isTestnetAddress=false;
+                break;
+            case 1:
+                mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BCH);
+                mSelectedCryptocurrencyToggleText = mSelectedCryptocurrency;
+                selectedAddress = mBitcoinCashPaymentAddress;
+                isTestnetAddress=false;
+                break;
+            case 2:
+                mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.LTC);
+                mSelectedCryptocurrencyToggleText = mSelectedCryptocurrency;
+                selectedAddress = mLitecoinPaymentAddress;
+                isTestnetAddress=false;
+                break;
+            case 3:
+                mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTCTEST);
+                mSelectedCryptocurrencyToggleText = getString(R.string.btctest);
+                selectedAddress = mTestnetBitcoinPaymentAddress;
+                isTestnetAddress=true;
+                break;
+        }
+
+        //mLitecoinPaymentAddress = mSharedPreferences...
+        //mLBitcoinCashPaymentAddress = mSharedPreferences...
+
+        mMerchantName = mSharedPreferences.getString(getString(R.string.merchant_name_key), "");
+
         totalItemsCountLinearLayout = (LinearLayout) fragmentView.findViewById(R.id.total_items_count_linear_layout);
         totalItemsCountLinearLayout.setOnClickListener(this);
 
         currencyToggle = (ToggleButton) fragmentView.findViewById(R.id.currencyToggleButton);
-        currencyToggle.setTextOff("BTC");
+
+        currencyToggle.setTextOff(mSelectedCryptocurrencyToggleText);
         currencyToggle.setTextOn(mLocalCurrency);
         currencyToggle.toggle();
         currencyToggle.setOnClickListener(this);
@@ -95,8 +175,10 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         totalAmountTextView = (TextView) fragmentView.findViewById(R.id.totalAmountTextView);
         totalItemsCountTextView = (TextView) fragmentView.findViewById(R.id.totalItemsCountTextView);
         totalSecondaryAmountTextView = (TextView) fragmentView.findViewById(R.id.totalSecondaryAmountTextView);
+
         if(currencyToggle.isChecked()) {
-            totalSecondaryAmountTextView.setText("0 BTC");
+
+            totalSecondaryAmountTextView.setText("0 " + mSelectedCryptocurrencyToggleText.toString());//"0 BTC"
         } else {
             totalSecondaryAmountTextView.setText("0 " + mLocalCurrency.toString());
         }
@@ -112,6 +194,97 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     in.hideSoftInputFromWindow(productNameEditText.getApplicationWindowToken(),InputMethodManager.HIDE_NOT_ALWAYS);
                 }
                 return false;
+            }
+        });
+
+        //boolean closeDrawer = false;
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int id) {
+                View radioButton = radioGroup.findViewById(id);
+                if (mItemsInCart.size() > 0) {
+                    //closeDrawer=true;
+                    countCheckButtonChanges++;
+                    if(countCheckButtonChanges==2){
+                        DrawerLayout drawerLayout = (DrawerLayout) getActivity().findViewById(R.id.drawer_layout);
+                        drawerLayout.closeDrawers();
+                        Snackbar.make(coordinatorLayout, R.string.all_items_same_currency, Snackbar.LENGTH_LONG).show();
+                        countCheckButtonChanges=0;
+                    }
+                    //showSnackbar = true;
+                    RadioButton rButton = (RadioButton) radioGroup.getChildAt(selectedCrypto);
+                    rButton.setChecked(true);
+
+                        // drawer Listener to check when drawer opens, closes etc.
+//                    if (drawerLayout != null && drawerLayout instanceof DrawerLayout) {
+//                        drawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
+//                            @Override
+//                            public void onDrawerSlide(View view, float v) {}
+//                            @Override
+//                            public void onDrawerOpened(View view) {}
+//                            @Override
+//                            public void onDrawerClosed(View view) {
+//                                Snackbar.make(coordinatorLayout, R.string.all_items_same_currency, Snackbar.LENGTH_LONG).show();
+//                            }
+//                            @Override
+//                            public void onDrawerStateChanged(int i) {}
+//                        });
+//                    }
+
+                } else {
+                    selectedCrypto = radioGroup.indexOfChild(radioButton);
+                    //set background color for the selected item and for the unselected items
+                    setSelectedItemNavigationList(id);
+
+
+                    switch (selectedCrypto){
+                        case 0:
+                            mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTC);
+                            mSelectedCryptocurrencyToggleText = mSelectedCryptocurrency;
+                            selectedAddress = mBitcoinPaymentAddress;
+                            isTestnetAddress=false;
+                            break;
+                        case 1:
+                            mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BCH);
+                            mSelectedCryptocurrencyToggleText = mSelectedCryptocurrency;
+                            selectedAddress = mBitcoinCashPaymentAddress;
+                            isTestnetAddress=false;
+                            break;
+                        case 2:
+                            mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.LTC);
+                            mSelectedCryptocurrencyToggleText = mSelectedCryptocurrency;
+                            selectedAddress = mBitcoinPaymentAddress;
+                            isTestnetAddress=false;
+                            break;
+                        case 3:
+                            mSelectedCryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTCTEST);
+                            mSelectedCryptocurrencyToggleText = getString(R.string.btctest);
+                            selectedAddress = mTestnetBitcoinPaymentAddress;
+                            isTestnetAddress=true;
+                            break;
+                    }
+
+                    ExchangeRates exchangeRates = ExchangeRates.getInstance();
+                    exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
+                    exchangeRates.updateExchangeRatesCryptocompare(getActivity(), mSelectedCryptocurrencyToggleText);
+
+                    if (currencyToggle.isChecked()) {
+
+                        totalSecondaryAmountTextView.setText("0 " + mSelectedCryptocurrencyToggleText);//"0 BTC"}
+
+                    } else {
+
+                        totalSecondaryAmountTextView.setText("0 " + mLocalCurrency.toString());
+                    }
+
+                    currencyToggle.setTextOn(mLocalCurrency);
+
+                    currencyToggle.setTextOff(mSelectedCryptocurrencyToggleText);
+
+                    currencyToggle.setChecked(currencyToggle.isChecked());
+
+
+                }
             }
         });
 
@@ -150,19 +323,32 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         requestPayment = (Button) fragmentView.findViewById(R.id.request_payment);
         requestPayment.setOnClickListener(this);
 
+
         return fragmentView;
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putInt(getString(R.string.navigation_crypto), selectedCrypto);
+        editor.apply();
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if(Utilities.isNetworkConnectionAvailable(getContext())) {
+        if(Utilities.isNetworkConnectionAvailable(getActivity())) {
+
             ExchangeRates exchangeRates = ExchangeRates.getInstance();
-            exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+            exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
+            exchangeRates.updateExchangeRatesCryptocompare(getActivity(), mSelectedCryptocurrencyToggleText);
         } else {
             // checks again and then displays... maybe do it manually without method!
             checkIfNetworkConnectionAvailable();
         }
+
+
     }
 
 
@@ -174,6 +360,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
     @Override
     public void onClick(View v) {
+
         if(!(v instanceof EditText)) {
             productNameEditText.setCursorVisible(false);
         }
@@ -196,24 +383,42 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 String currentAmount = totalAmountTextView.getText().toString();
                 ExchangeRates exchangeRates = ExchangeRates.getInstance();
 
-                if (exchangeRates.getLastUpdated() != null) {
-                    if (!currencyToggle.isChecked()) {
+                if (exchangeRates.getLastUpdated() != null && exchangeRates.getLastUpdatedCryptocompare() != null && Utilities.isNetworkConnectionAvailable(getActivity()) ) {
+
+                        if (!currencyToggle.isChecked()) {
+
                         // TODO since no items and amount is 0 these conversions are useless for now
                         // was local currency - convert to BTC
-                        totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
-                        totalSecondaryAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount) + " " + mLocalCurrency);
-                    } else {
+
+
+                            if (mSelectedCryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
+                                totalAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount));
+                                totalSecondaryAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount) + " " + mLocalCurrency);
+                            } else {
+                                totalAmountTextView.setText(CurrencyUtils.getOtherCryptosFromLocalCurrency(currentAmount));
+                                totalSecondaryAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount) + " " + mLocalCurrency);
+                            }
+
+
+                        } else {
                         // TODO since no items and amount is 0 these conversions are useless for now
                         // was BTC - convert to local currency
-                        totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
-                        totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount) + " BTC");
-                    }
+                            if(mSelectedCryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))){
+                                totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromBtc(currentAmount));
+                                totalSecondaryAmountTextView.setText(CurrencyUtils.getBtcFromLocalCurrency(currentAmount) + " " + String.valueOf(CurrencyUtils.CurrencyType.BTC));
+                        }
+                            else {
+                                totalAmountTextView.setText(CurrencyUtils.getLocalCurrencyFromOtherCryptos(currentAmount));
+                                totalSecondaryAmountTextView.setText(CurrencyUtils.getOtherCryptosFromLocalCurrency(currentAmount) + " " + mSelectedCryptocurrencyToggleText);
+                            }
+                        }
+
                 } else {
                     // toggle failed -- toggle programmatically to revert
                     currencyToggle.toggle();
 
                     // checks network connection and then displays message with retry
-                    if (!Utilities.isNetworkConnectionAvailable(getContext())) {
+                    if (!Utilities.isNetworkConnectionAvailable(getActivity())) {
                         Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_LONG)
                                 .setAction(R.string.retry, new View.OnClickListener() {
                                     @Override
@@ -225,8 +430,9 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                         mesg.show();
                     } else {
                         // attempt to get exchange rates again
-                        exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
-                        Toast.makeText(getContext(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
+                        exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
+                        exchangeRates.updateExchangeRatesCryptocompare(getActivity(), mSelectedCryptocurrencyToggleText);
+                        Toast.makeText(getActivity(), R.string.updating_exchange_rates, Toast.LENGTH_LONG).show();
                     }
                 }
             } else {
@@ -256,7 +462,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     break;
                 case R.id.btn_inv:
                     // check if Items db is empty
-                    ItemHelper itemHelper = ItemHelper.getInstance(getContext());
+                    ItemHelper itemHelper = ItemHelper.getInstance(getActivity());
                     List<Item> allItems = itemHelper.getAll();
                     if(allItems.size() > 0) {
                         DialogFragment myDialog = ShowItemFragment.newInstance(1, ShowItemFragment.DialogType.SELECT_ITEM_LIST, allItems);
@@ -276,17 +482,44 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     break;
                 case R.id.btn_add_to_cart:
                     if(Double.parseDouble(amount.getText().toString()) != 0) {
+                        if (Utilities.isNetworkConnectionAvailable(getActivity())){
                         double cartItemAmount = CurrencyUtils.stringAmountToDouble(amount.getText().toString());
                         double cartTotalAmount = CurrencyUtils.stringAmountToDouble(totalAmountTextView.getText().toString());
                         double newCartTotalAmount = cartTotalAmount + cartItemAmount;
                         String newCartTotalAmountStr, newCartSecondaryTotalAmountStr;
-                        if(currencyToggle.isChecked()) {
-                            newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.LOCAL);
-                            newCartSecondaryTotalAmountStr = CurrencyUtils.getBtcFromLocalCurrency(newCartTotalAmountStr) + " BTC";
-                        } else {
-                            newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.BTC);
-                            newCartSecondaryTotalAmountStr = CurrencyUtils.getLocalCurrencyFromBtc(newCartTotalAmountStr) + " " + mLocalCurrency;
-                        }
+
+                            if (currencyToggle.isChecked()) {
+
+                                if (mSelectedCryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
+                                    newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.LOCAL);
+                                    newCartSecondaryTotalAmountStr = CurrencyUtils.getBtcFromLocalCurrency(newCartTotalAmountStr) + " " + String.valueOf(CurrencyUtils.CurrencyType.BTC);
+                                } else {
+                                    newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.LOCAL);
+
+                                    newCartSecondaryTotalAmountStr = CurrencyUtils.getOtherCryptosFromLocalCurrency(newCartTotalAmountStr) + " " + mSelectedCryptocurrencyToggleText;
+                                }
+
+                            } else {
+
+                                if (mSelectedCryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
+                                    newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, CurrencyUtils.CurrencyType.BTC);
+                                    newCartSecondaryTotalAmountStr = CurrencyUtils.getLocalCurrencyFromBtc(newCartTotalAmountStr) + " " + mLocalCurrency;
+                                } else {
+                                    CurrencyUtils.CurrencyType cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTC;
+                                    if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BCH)) {
+                                        cryptoCurrencySelected = CurrencyUtils.CurrencyType.BCH;
+                                    //} else if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.ETH)) {
+                                    //    cryptoCurrencySelected = CurrencyUtils.CurrencyType.ETH;
+                                    } else if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.LTC)) {
+                                        cryptoCurrencySelected = CurrencyUtils.CurrencyType.LTC;
+                                    } else if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTCTEST)) {
+                                        cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTCTEST;
+                                    }
+                                    newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, cryptoCurrencySelected);
+                                    newCartSecondaryTotalAmountStr = CurrencyUtils.getLocalCurrencyFromOtherCryptos(newCartTotalAmountStr) + " " + mLocalCurrency;
+                                }
+
+                            }
 
 
                         // is new amount amount valid?
@@ -305,6 +538,12 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                             // reset amount and item name
                             amount.setText("0");
                             productNameEditText.setText("");
+                        }
+
+                        }
+                        else {
+                            // exchange rate is not available
+                            Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_LONG).show();
                         }
                     }
                     break;
@@ -342,44 +581,75 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                 case R.id.request_payment:
                     // update exchange rates for this or next payment request
                     ExchangeRates exchangeRates = ExchangeRates.getInstance();
-                    exchangeRates.updateExchangeRates(getContext(), mLocalCurrency);
+                    exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
+                    exchangeRates.updateExchangeRatesCryptocompare(getActivity(), mSelectedCryptocurrencyToggleText);
+                    //if (mBitcoinPaymentAddress.isEmpty() || !BitcoinAddressValidator.validate(mBitcoinPaymentAddress, testnetStatus)) {
+                    // TODO add BCH validation
+                    if ( selectedAddress.isEmpty() || (!AddressValidator.validate(selectedAddress, mSelectedCryptocurrency) && !mSelectedCryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH)))) {
 
-                    if (mBitcoinPaymentAddress.isEmpty() || !BitcoinUtils.validateAddress(mBitcoinPaymentAddress)) {
-                        Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_bitcoin_address_message, Snackbar.LENGTH_LONG)
-                                .setAction(getString(R.string.action_settings), new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent goToSettings = new Intent(getContext(), SettingsActivity.class);
-                                startActivity(goToSettings);
-                            }
+                            Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_cryptocurrency_address_message, Snackbar.LENGTH_LONG)
+                                    .setAction(getString(R.string.action_settings), new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            Intent goToSettings = new Intent(getActivity(), SettingsActivity.class);
+                                            startActivity(goToSettings);
+                                        }
 
-                        });
+                                    });
                         mesg.show();
+
                     } else if(Double.parseDouble(totalAmountTextView.getText().toString()) <= 0) {
-                        Toast.makeText(getContext(), R.string.amount_needs_to_be_positive, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), R.string.amount_needs_to_be_positive, Toast.LENGTH_SHORT).show();
                     } else if(checkIfNetworkConnectionAvailable()) {   // check also displays toast with issue  TODO clean with else clause and simpler check
 
-                        if(exchangeRates.getLastUpdated() != null) {
+                        if(exchangeRates.getLastUpdated() != null && exchangeRates.getLastUpdatedCryptocompare() != null) {
 
                             String primaryAmount, secondaryAmount;
                             boolean isPrimaryAmount;
                             if (currencyToggle.isChecked()) {
                                 // was local currency - convert to BTC
                                 primaryAmount = totalAmountTextView.getText().toString(); //+ " " + mLocalCurrency;
-                                secondaryAmount = CurrencyUtils.getBtcFromLocalCurrency(totalAmountTextView.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
+                                //secondaryAmount = CurrencyUtils.getBtcFromLocalCurrency(totalAmountTextView.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
+                                if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTC.toString())) {
+                                    secondaryAmount = CurrencyUtils.getBtcFromLocalCurrency(totalAmountTextView.getText().toString()); // "(" + getBtcFromLocalCurrency(amount.getText().toString()) + " BTC)";
+                                }
+                                else{
+                                    secondaryAmount = CurrencyUtils.getOtherCryptosFromLocalCurrency(totalAmountTextView.getText().toString());
+                                }
                                 isPrimaryAmount = false;
                             } else {
                                 // was BTC - convert to local currency
                                 primaryAmount = totalAmountTextView.getText().toString(); // + " BTC";
-                                secondaryAmount = CurrencyUtils.getLocalCurrencyFromBtc(totalAmountTextView.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+                                //secondaryAmount = CurrencyUtils.getLocalCurrencyFromBtc(totalAmountTextView.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+
+                                if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTC.toString()))
+                                {
+                                    secondaryAmount = CurrencyUtils.getLocalCurrencyFromBtc(totalAmountTextView.getText().toString()); //"(" + getLocalCurrencyFromBtc(amount.getText().toString()) + " " + mLocalCurrency + ")";
+                                }
+                                else{
+                                    secondaryAmount = CurrencyUtils.getLocalCurrencyFromOtherCryptos(totalAmountTextView.getText().toString());
+                                }
+
                                 isPrimaryAmount = true;
                             }
 
-                            DialogFragment myDialog = PaymentRequestFragment.newInstance(mBitcoinPaymentAddress, mMerchantName, primaryAmount,
-                                    secondaryAmount, isPrimaryAmount, mLocalCurrency, String.valueOf(exchangeRates.getBtcToLocalRate()), convertCartItemsToString(mItemsInCart));
+                            double btcAmount = (isPrimaryAmount) ? Double.parseDouble(primaryAmount) : Double.parseDouble(secondaryAmount);
+
+                            String exRateLocal = String.valueOf(exchangeRates.getBtcToLocalRate());
+                            //query database to check if there is another tx with the same amount of BTC and for the same payment address
+                            boolean statusOtherTxWithSameAmount = UpdateDbHelper.checkIfAlreadyCreatedTx(btcAmount,selectedAddress);
+                            if(statusOtherTxWithSameAmount){
+                                showDialogCannotCreateNewTransaction();
+                            }
+                            else {
+
+                            DialogFragment myDialog = PaymentRequestFragment.newInstance(selectedAddress, mMerchantName, primaryAmount,
+                                    secondaryAmount, isPrimaryAmount, mLocalCurrency, exRateLocal, convertCartItemsToString(mItemsInCart), mSelectedCryptocurrencyToggleText); //mSelectedCryptocurrency
                             // for API >= 23 the title is disable by default -- we set a style that enables it
                             myDialog.setStyle(DialogFragment.STYLE_NORMAL, R.style.RequestPaymentDialogFragment);
                             myDialog.show(getFragmentManager(), getString(R.string.request_payment_fragment_tag));
+                            }
+
                         } else {
                             // exchange rate is not available
                             Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_LONG)
@@ -404,6 +674,16 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
     }
 
+    private void setSelectedItemNavigationList(int selectedItem){
+        for(int i=0; i<radioGroup.getChildCount(); i++){
+            RadioButton rb = (RadioButton) radioGroup.getChildAt(i);
+            rb.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+        }
+
+        RadioButton rb = (RadioButton) radioGroup.findViewById(selectedItem);
+        rb.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+    }
+
     private String convertCartItemsToString(List<Item> mItemsInCart) {
         // TODO: put separator in a GenericUtils class ?
         StringBuilder idsStr = new StringBuilder();
@@ -417,7 +697,7 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
 
     private boolean checkIfNetworkConnectionAvailable() {
-        if(!Utilities.isNetworkConnectionAvailable(getContext())) {
+        if(!Utilities.isNetworkConnectionAvailable(getActivity())) {
             Snackbar.make(coordinatorLayout, R.string.network_connection_not_available_message, Snackbar.LENGTH_SHORT).show();
             return false;
         }
@@ -427,16 +707,31 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
 
 
     private boolean checkAmountAndDisplayIfError(String newAmount) {
+
+        CurrencyUtils.CurrencyType cryptoCurrencySelected;
+        if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTC.toString())) {
+            cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTC;
+        }
+        else if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BCH.toString())) {
+            cryptoCurrencySelected = CurrencyUtils.CurrencyType.BCH;
+        }
+        else if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTCTEST.toString())) {
+            cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTCTEST;
+        }
+        else {
+            cryptoCurrencySelected = CurrencyUtils.CurrencyType.LTC;
+        }
+
         int error = CurrencyUtils.checkValidAmount(CurrencyUtils.stringAmountToDouble(newAmount),
-                currencyToggle.isChecked() ? CurrencyUtils.CurrencyType.LOCAL : CurrencyUtils.CurrencyType.BTC);
+                currencyToggle.isChecked() ? CurrencyUtils.CurrencyType.LOCAL : cryptoCurrencySelected);
         if (error > 0) {
             amount.setText(newAmount);
             return false;
         } else {
             if(error == -1) {
-                Toast.makeText(getContext(), R.string.amount_less_than_10000_message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), R.string.amount_less_than_10000_message, Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(getContext(), R.string.amount_has_more_decimals_than_allowed, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), R.string.amount_has_more_decimals_than_allowed, Toast.LENGTH_SHORT).show();
             }
             return true;
         }
@@ -447,4 +742,27 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
         // nothing to do when it becomes visible for now
         // TODO could update the exchange rates!
     }
+
+    //
+
+
+    private void showDialogCannotCreateNewTransaction() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(getString(R.string.other_pending_or_ongoing_transaction_title));
+        builder.setMessage(getString(R.string.other_pending_or_ongoing_transaction_found_message));
+        builder.setCancelable(true);
+
+        builder.setPositiveButton(
+                "Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                       dialog.cancel();
+                    }
+                });
+
+        AlertDialog alert11 = builder.create();
+        alert11.show();
+    }
+
 }

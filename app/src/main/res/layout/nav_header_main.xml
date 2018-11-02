@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/view_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="start"
+
+    android:orientation="vertical"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark">
+
+
+
+    <ImageView
+        android:layout_marginTop="10dp"
+        android:padding="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:src="@drawable/handshake_logo"
+        android:layout_marginBottom="20dp"/>
+
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginBottom="20dp"
+        android:textColor="@color/nav_list_text_white"
+        android:text="@string/select_cryptocurrency"/>
+
+
+    <RadioGroup
+        android:id="@+id/radiogroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/radioButtonBtc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bitcoin_nav_list"
+            style="@style/navbar_button" />
+
+        <RadioButton
+            android:id="@+id/radioButtonBch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bitcoin_cash_nav_list"
+            style="@style/navbar_button" />
+
+        <RadioButton
+            android:id="@+id/radioButtonLtc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/litecoin_nav_list"
+            style="@style/navbar_button"/>
+
+        <!--<RadioButton-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="Ethereum"-->
+            <!--android:enabled="false"/>-->
+
+        <RadioButton
+            android:id="@+id/radioButtonBtcTestnet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bitcoin_testnet_nav_list"
+            style="@style/navbar_button" />
+
+
+    </RadioGroup>
+
+
+</LinearLayout>

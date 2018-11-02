@@ -12,10 +12,8 @@ import java.util.Date;
 
 import gr.cryptocurrencies.bitcoinpos.utilities.DateUtilities;
 
-/**
- * Created by kostas on 22/8/2016.
- * DAO object of Item -- for simplicity since other patterns would be an overkill
- */
+
+
 public class Item implements Parcelable {
 
     private Integer itemId;

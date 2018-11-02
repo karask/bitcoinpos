@@ -16,8 +16,33 @@
         android:dialogTitle="@string/local_currency" />
     
     <Preference
-        android:key="@string/payment_address_key"
-        android:title="@string/payment_address"
-        android:dialogTitle="@string/payment_address"/>
+        android:key="@string/btc_payment_address_key"
+        android:title="@string/payment_address_btc"
+        android:dialogTitle="@string/payment_address_btc"/>
+
+    <Preference
+        android:key="@string/bch_payment_address_key"
+        android:title="@string/payment_address_bch"
+        android:dialogTitle="@string/payment_address_bch"/>
+
+    <Preference
+        android:key="@string/ltc_payment_address_key"
+        android:title="@string/payment_address_ltc"
+        android:dialogTitle="@string/payment_address_ltc"/>
+
+    <CheckBoxPreference
+        android:key="@string/accept_testnet_key"
+        android:title="@string/accept_bitcoin_testnet_address_title"
+        android:summary="@string/accept_bitcoin_testnet_address_summary"
+        android:defaultValue="false"/>
+
+    <Preference
+        android:id="@+id/btc_testnet_pref"
+        android:key="@string/btc_test_payment_address_key"
+
+        android:title="@string/payment_address_btc_test"
+        android:dialogTitle="@string/payment_address_btc_test"/>
+
+
 
 </PreferenceScreen>

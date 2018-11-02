@@ -7,15 +7,17 @@ import java.util.Locale;
 
 import gr.cryptocurrencies.bitcoinpos.network.ExchangeRates;
 
-/**
- * Created by kostas on 26/8/2016.
- */
+
 public class CurrencyUtils {
 
     private static final double maxBTCAmount = 10000;
 
     public enum CurrencyType {
         BTC,
+        BTCTEST,
+        BCH,
+        LTC,
+        ETH,
         LOCAL
     }
     public static double stringAmountToDouble(String amountStr) {
@@ -24,10 +26,25 @@ public class CurrencyUtils {
 
     public static String doubleAmountToString(double amount, CurrencyType currencyType) {
 
+        // TODO Locale depending on Android settings... not fixed
+
         DecimalFormat formatter;
         if(currencyType == CurrencyType.BTC) {
             formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
-        } else {
+        }
+        else if(currencyType == CurrencyType.BCH) {
+            formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        }
+        else if(currencyType == CurrencyType.LTC) {
+            formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        }
+        else if(currencyType == CurrencyType.ETH) {
+            formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        }
+        else if(currencyType == CurrencyType.BTCTEST) {
+            formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        }
+        else {
             formatter = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
         }
         formatter.setRoundingMode( RoundingMode.HALF_UP );
@@ -45,6 +62,16 @@ public class CurrencyUtils {
         return formatter.format(newAmount);
     }
 
+    public static String getLocalCurrencyFromOtherCryptos(String amount) {
+
+        ExchangeRates exchangeRates = ExchangeRates.getInstance();
+
+        double newAmount = Double.parseDouble(amount) * exchangeRates.getOtherCryptosToLocalRate();
+        DecimalFormat formatter = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        formatter.setRoundingMode( RoundingMode.HALF_UP );
+        return formatter.format(newAmount);
+    }
+
     // TODO: use doubleAmountToString for cleaner code
     public static String getBtcFromLocalCurrency(String amount) {
 
@@ -54,6 +81,18 @@ public class CurrencyUtils {
         //double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getLocalToBtcRate();
 
         double newAmount = Double.parseDouble(amount) / exchangeRates.getBtcToLocalRate();
+        DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
+        formatter.setRoundingMode( RoundingMode.HALF_UP );
+        return formatter.format(newAmount);
+    }
+
+    public static String getOtherCryptosFromLocalCurrency(String amount){
+        ExchangeRates exchangeRates = ExchangeRates.getInstance();
+
+        // the following was losing precision at every toggling!!
+        //double newAmount = Double.parseDouble(currentAmount) * exchangeRates.getLocalToBtcRate();
+
+        double newAmount = Double.parseDouble(amount) / exchangeRates.getOtherCryptosToLocalRate();
         DecimalFormat formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));
         formatter.setRoundingMode( RoundingMode.HALF_UP );
         return formatter.format(newAmount);

@@ -5,6 +5,7 @@
     <color name="colorAccent">@android:color/holo_orange_light</color>
 
     <color name="windowBackground">#FFFFFF</color>
+    <color name="nav_list_text_white">#FFFFFF</color>
 
     <color name="colorLightPrimary">#FFCCBC</color>
     <color name="colorTextIcons">#FFFFFF</color>

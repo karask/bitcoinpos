@@ -54,4 +54,16 @@
     <style name="ShowItemDialogFragment" parent="@style/Theme.AppCompat.Light.Dialog">
         <item name="android:windowNoTitle">false</item>
     </style>
+
+
+    <style name="navbar_button">
+
+        <item name="android:button">@null</item>
+
+        <item name="android:gravity">start</item>
+        <item name="android:textSize">12dp</item>
+        <item name="android:background">@color/colorPrimary</item>
+        <item name="android:padding">16dp</item>
+
+    </style>
 </resources>
