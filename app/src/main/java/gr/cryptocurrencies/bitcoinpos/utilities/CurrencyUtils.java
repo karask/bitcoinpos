@@ -26,6 +26,8 @@ public class CurrencyUtils {
 
     public static String doubleAmountToString(double amount, CurrencyType currencyType) {
 
+        // TODO Locale depending on Android settings... not fixed
+
         DecimalFormat formatter;
         if(currencyType == CurrencyType.BTC) {
             formatter = new DecimalFormat("#.########", DecimalFormatSymbols.getInstance( Locale.ENGLISH ));

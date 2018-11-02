@@ -17,8 +17,7 @@ public class PointOfSaleDb extends SQLiteOpenHelper {
 
     public static final String TRANSACTIONS_TABLE_NAME = "transactions";
 
-
-        // previous TRANSACTIONS TABLE COLYMNS
+    // previous TRANSACTIONS TABLE COLYMNS
     /*
     public static final String TRANSACTIONS_COLUMN_TX_ID = "transaction_id";
     public static final String TRANSACTIONS_COLUMN_BITCOIN_AMOUNT = "bitcoin_amount";
@@ -28,8 +27,8 @@ public class PointOfSaleDb extends SQLiteOpenHelper {
     public static final String TRANSACTIONS_COLUMN_CONFIRMED_AT = "confirmed_at";
     public static final String TRANSACTIONS_COLUMN_MERCHANT_NAME = "merchant_name";
     public static final String TRANSACTIONS_COLUMN_BITCOIN_ADDRESS = "bitcoin_address";
-        //public static final String TRANSACTIONS_COLUMN_IS_CONFIRMED = "is_confirmed";  //previous column name for Tx Status, set to true or false only
-        //public static final String TRANSACTIONS_COLUMN_TX_STATUS = "is_confirmed";//keeping previous name
+    //public static final String TRANSACTIONS_COLUMN_IS_CONFIRMED = "is_confirmed";  //previous column name for Tx Status, set to true or false only
+    //public static final String TRANSACTIONS_COLUMN_TX_STATUS = "is_confirmed";//keeping previous name
     public static final String TRANSACTIONS_COLUMN_TX_STATUS = "transaction_status";
     public static final String TRANSACTIONS_COLUMN_PRODUCT_NAME = "product_name";
     public static final String TRANSACTIONS_COLUMN_EXCHANGE_RATE = "exchange_rate";
@@ -46,8 +45,7 @@ public class PointOfSaleDb extends SQLiteOpenHelper {
     public static final String TRANSACTIONS_COLUMN_TX_STATUS_PREVIOUS_NAME = "is_confirmed";//  previous name
 
 
-    ///////////////// new columns for table TRANSACTIONS
-
+    // new columns for table TRANSACTIONS
     public static final String TRANSACTIONS_COLUMN_TX_ID = "transaction_id";
     public static final String TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT = "cryptocurrency_amount";
     public static final String TRANSACTIONS_COLUMN_LOCAL_AMOUNT = "local_amount";

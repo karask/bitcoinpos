@@ -235,10 +235,10 @@ public class PaymentRequestFragment extends DialogFragment  {
             smallerDimension = smallerDimension * 3/4;
 
             String uriCrypto;
-            if(mCryptocurrency.equals(getString(R.string.btc))){uriCrypto = getString(R.string.bitcoin);}
-            else if(mCryptocurrency.equals(getString(R.string.bch))){uriCrypto = getString(R.string.bitcoin_cash);}
-            else if(mCryptocurrency.equals(getString(R.string.ltc))){uriCrypto = getString(R.string.litecoin);}
-            else {uriCrypto = getString(R.string.bitcoin_testnet);}
+            if(mCryptocurrency.equals(getString(R.string.btc))) { uriCrypto = getString(R.string.bitcoin); }
+            else if(mCryptocurrency.equals(getString(R.string.bch))) { uriCrypto = getString(R.string.bitcoin_cash); }
+            else if(mCryptocurrency.equals(getString(R.string.ltc))) { uriCrypto = getString(R.string.litecoin); }
+            else { uriCrypto = getString(R.string.bitcoin_testnet); }
             // generate QR code to show in image view
             try {
                 // generate BIP 21 compatible payment URI
@@ -272,10 +272,10 @@ public class PaymentRequestFragment extends DialogFragment  {
             selected = radiogroup.indexOfChild(radioButton);
 
             String cryptocurrency="";
-            if(selected==0){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTC); }
-            else if(selected==1){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BCH);}
-            else if(selected==2){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.LTC);}
-            else if(selected==3){cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTCTEST);}
+            if(selected==0)      { cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BTC); }
+            else if(selected==1) { cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.BCH); }
+            else if(selected==2) { cryptocurrency = String.valueOf(CurrencyUtils.CurrencyType.LTC); }
+            else if(selected==3) { cryptocurrency = getString(R.string.btctest); }
 
             //Toast.makeText(getActivity(), String.valueOf(selected), Toast.LENGTH_SHORT).show();
 
@@ -285,8 +285,8 @@ public class PaymentRequestFragment extends DialogFragment  {
 
             _rowID = rowID;
 
-            BlockchainInfoHelper.sendBroadcast();
             //send broadcast to update History View
+            BlockchainInfoHelper.sendBroadcast();
 
             
         }
@@ -319,19 +319,19 @@ public class PaymentRequestFragment extends DialogFragment  {
                     Log.d("CHECK FOR ONG/CONFIRM", amount + "!");
                     boolean mainNet;
                     switch (selected) {
-                        case 0://radiobutton 1 , BTC
+                        case 0: //radiobutton 1 , BTC
                             mainNet = true;
                             BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch, mainNet);
                         break;
-                        case 1://radiobutton 1 , BTC
+                        case 1: //radiobutton 2 , BCH
                             mainNet = true;
                             RestBitcoinHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch, mainNet);
                             break;
-                        case 2:
+                        case 2: //radiobutton 3 , LTC
                             mainNet=true;
                             BlockcypherHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch);
                             break;
-                        case 3://radiobutton 5 , BTC TESTNET
+                        case 3: //radiobutton 4 , BTC TESTNET
                             mainNet = false;
                             BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed(mCryptocurrencyAddress, amountSatoshi, _rowID, timeNowEpoch, mainNet);
                             break;

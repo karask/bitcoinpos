@@ -508,12 +508,12 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                                     CurrencyUtils.CurrencyType cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTC;
                                     if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BCH)) {
                                         cryptoCurrencySelected = CurrencyUtils.CurrencyType.BCH;
-                                    } else if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.ETH)) {
-                                        cryptoCurrencySelected = CurrencyUtils.CurrencyType.ETH;
+                                    //} else if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.ETH)) {
+                                    //    cryptoCurrencySelected = CurrencyUtils.CurrencyType.ETH;
                                     } else if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.LTC)) {
                                         cryptoCurrencySelected = CurrencyUtils.CurrencyType.LTC;
                                     } else if (mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTCTEST)) {
-                                        cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTC;
+                                        cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTCTEST;
                                     }
                                     newCartTotalAmountStr = CurrencyUtils.doubleAmountToString(newCartTotalAmount, cryptoCurrencySelected);
                                     newCartSecondaryTotalAmountStr = CurrencyUtils.getLocalCurrencyFromOtherCryptos(newCartTotalAmountStr) + " " + mLocalCurrency;
@@ -584,7 +584,8 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
                     exchangeRates.updateExchangeRates(getActivity(), mLocalCurrency);
                     exchangeRates.updateExchangeRatesCryptocompare(getActivity(), mSelectedCryptocurrencyToggleText);
                     //if (mBitcoinPaymentAddress.isEmpty() || !BitcoinAddressValidator.validate(mBitcoinPaymentAddress, testnetStatus)) {
-                    if ( selectedAddress.isEmpty() || (!AddressValidator.validate(selectedAddress, mSelectedCryptocurrency) && !mSelectedCryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH)))){
+                    // TODO add BCH validation
+                    if ( selectedAddress.isEmpty() || (!AddressValidator.validate(selectedAddress, mSelectedCryptocurrency) && !mSelectedCryptocurrency.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH)))) {
 
                             Snackbar mesg = Snackbar.make(coordinatorLayout, R.string.specify_valid_cryptocurrency_address_message, Snackbar.LENGTH_LONG)
                                     .setAction(getString(R.string.action_settings), new View.OnClickListener() {
@@ -708,14 +709,14 @@ public class PaymentFragment extends Fragment implements View.OnClickListener, F
     private boolean checkAmountAndDisplayIfError(String newAmount) {
 
         CurrencyUtils.CurrencyType cryptoCurrencySelected;
-        if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTC.toString())){
+        if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTC.toString())) {
             cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTC;
         }
-        else if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BCH.toString())){
+        else if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BCH.toString())) {
             cryptoCurrencySelected = CurrencyUtils.CurrencyType.BCH;
         }
-        else if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.ETH.toString())){
-            cryptoCurrencySelected = CurrencyUtils.CurrencyType.ETH;
+        else if(mSelectedCryptocurrency.equals(CurrencyUtils.CurrencyType.BTCTEST.toString())) {
+            cryptoCurrencySelected = CurrencyUtils.CurrencyType.BTCTEST;
         }
         else {
             cryptoCurrencySelected = CurrencyUtils.CurrencyType.LTC;

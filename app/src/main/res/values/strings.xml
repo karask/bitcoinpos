@@ -96,8 +96,7 @@
     <string name="btc" translatable="false">BTC</string>
     <string name="ltc" translatable="false">LTC</string>
     <string name="bch" translatable="false">BCH</string>
-    <string name="btctest" translatable="false">BTC</string>
-    <string name="btctest_history_item" translatable="false">BTCt</string>
+    <string name="btctest" translatable="false">tBTC</string>
 
     <string name="bitcoin" translatable="false">bitcoin</string>
     <string name="litecoin" translatable="false">litecoin</string>

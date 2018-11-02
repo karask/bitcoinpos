@@ -8,8 +8,8 @@ android {
         applicationId "gr.cryptocurrencies.bitcoinpos"
         minSdkVersion 16
         targetSdkVersion 27
-        versionCode 16
-        versionName "1.6.0"
+        versionCode 18
+        versionName "1.7.0"
 
         multiDexEnabled true
     }

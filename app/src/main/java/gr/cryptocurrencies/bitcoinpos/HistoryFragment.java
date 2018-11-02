@@ -211,18 +211,18 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                     //double btcAmount = c.getDouble(5);
                     //double amountSatoshi = btcAmount * 100000000;
                     String crypto = c.getString(8);
-                    if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))){
+                    if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
                         boolean mainNet=true;
                         BlockchainInfoHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress,mainNet);
                     }
-                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))){
+                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))) {
                         boolean mainNet=false;
                         BlockchainInfoHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress,mainNet);
                     }
-                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))){
+                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))) {
                         BlockcypherHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress);
                     }
-                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))){
+                    else if (crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))) {
                         RestBitcoinHelper.updateOngoingTxToConfirmedByTxId(txId,bitcoinAddress);
                     }
 
@@ -243,19 +243,18 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
                     String crypto = c.getString(8);// get saved cryptocurrency from db
 
-                    if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))){
+                    if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
                         boolean mainNet = true;
                         BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch, mainNet );
                     }
-                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))){
+                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))) {
                         boolean mainNet = false;
                         BlockchainInfoHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch, mainNet );
                     }
-                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))){
-                        boolean mainNet = true;
+                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))) {
                         BlockcypherHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch );
                     }
-                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))){
+                    else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))) {
                         boolean mainNet = true;
                         RestBitcoinHelper.updatePendingTxToOngoingOrConfirmed( bitcoinAddress, amountSatoshi, rowId, timeUnixEpoch, mainNet );
                     }
@@ -284,13 +283,7 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 // Get BTC double value and convert to string without scientific notation
                 DecimalFormat df = new DecimalFormat("#.########");
                 String btc8DecimalAmount = df.format(c.getDouble(5));
-                String crypto = c.getString(8);
-                String cryptoAcronym="";
-                if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))){cryptoAcronym = String.valueOf(CurrencyUtils.CurrencyType.BTC);}
-                else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))){cryptoAcronym = String.valueOf(CurrencyUtils.CurrencyType.BCH);}
-                else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))){cryptoAcronym = String.valueOf(CurrencyUtils.CurrencyType.LTC);}
-                else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))){cryptoAcronym = getString(R.string.btctest_history_item);} // BTCt as acronym here not BTCTEST
-
+                String cryptoAcronym = c.getString(8);
 
                 int isConfirmedImage;
                 if("1".equals(c.getString(4))) {
@@ -307,13 +300,13 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
                 }
 
 
-                    //item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID, c.getString(0));
-                    item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, c.getString(1) + " " + c.getString(2));
-                    item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT, btc8DecimalAmount + " " + cryptoAcronym);
-                    item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT, DateUtilities.getRelativeTimeString(c.getString(3)));
-                    item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS, Integer.toString(isConfirmedImage));
+                //item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_ID, c.getString(0));
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_LOCAL_AMOUNT, c.getString(1) + " " + c.getString(2));
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CRYPTOCURRENCY_AMOUNT, btc8DecimalAmount + " " + cryptoAcronym);
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_CREATED_AT, DateUtilities.getRelativeTimeString(c.getString(3)));
+                item.put(PointOfSaleDb.TRANSACTIONS_COLUMN_TX_STATUS, Integer.toString(isConfirmedImage));
 
-                    mTransactionHistoryItemList.add(item);
+                mTransactionHistoryItemList.add(item);
 
 
             } while (c.moveToNext());
@@ -710,27 +703,29 @@ public class HistoryFragment extends ListFragment implements FragmentIsNowVisibl
 
     private void showInfoDialog(String btcAddress, String txId, String status, String crypto, double amount) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        if(txId==null){txId=getString(R.string.no_id);}
+        if(txId==null) {
+            txId = getString(R.string.no_id);
+        }
 
         String title = getString(R.string.bitcoin_tx_title);
         String acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.BTC);
         String paymentCryptoType = String.valueOf(CurrencyUtils.CurrencyType.BTC);
-        if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))){
+        if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTC))) {
             title = getString(R.string.bitcoin_tx_title);
             acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.BTC);
             paymentCryptoType = acronymCrypto;
         }
-        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))){
+        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BCH))) {
             title = getString(R.string.bitcoin_cash_tx_title);
             acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.BCH);
             paymentCryptoType = acronymCrypto;
         }
-        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))){
+        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.LTC))) {
             title = getString(R.string.litecoin_tx_title);
             acronymCrypto = String.valueOf(CurrencyUtils.CurrencyType.LTC);
             paymentCryptoType = acronymCrypto;
         }
-        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))){
+        else if(crypto.equals(String.valueOf(CurrencyUtils.CurrencyType.BTCTEST))) {
             title = getString(R.string.bitcoin_testnet_tx_title);
             acronymCrypto = getString(R.string.btctest);
             paymentCryptoType = getString(R.string.bitcoin_testnet_show_in_title);
